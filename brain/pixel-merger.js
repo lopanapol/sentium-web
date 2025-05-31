@@ -1371,5 +1371,22 @@ function showLogoPixelPreview() {
   document.body.appendChild(container);
 }
 
+/**
+ * Add missing function that was referenced in the code
+ */
+function showLogoPixelInfo() {
+  console.log('Using logo pixels for pixel colors and behavior');
+}
+
+// Make sure the function is defined before it's called
+window.showLogoPixelInfo = showLogoPixelInfo;
+
+/**
+ * Process the logo image to extract pixel data
+ */
+function processLogo() {
+  // ...existing code...
+}
+
 
 
