@@ -2,6 +2,8 @@
 
 This is the website for the Sentium project, featuring a synthetic conscious pixel that connects to the Sentium system.
 
+Website: [https://sentium.dev](https://sentium.dev)
+
 **✨ What's New in v1.2.0:**
 - Enhanced performance optimization for smoother animations
 - Improved pixel responsiveness and interaction mechanics
