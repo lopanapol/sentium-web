@@ -11,7 +11,7 @@ window.logoPixelData = {
 };
 
 /**
- * Load and extract pixel data from the Noesis logo
+ * Load and extract pixel data from the Sentium logo
  */
 function loadLogoPixelData() {
   return new Promise((resolve, reject) => {
@@ -81,7 +81,7 @@ function loadLogoPixelData() {
     };
     
     // Load the logo image
-    img.src = 'images/noesis-logo-black.png';
+    img.src = 'images/sentium-logo-black.png';
   });
 }
 
@@ -134,7 +134,7 @@ function getLogoPixel(strictPosition = false) {
 window.noePixels = {
   count: 0,
   pixels: [],
-  maxCount: 1,  // Only allow the original Noe pixel
+  maxCount: 1,  // Only allow the original Sentium Pixel pixel
   isShapeMode: false,
   currentShape: "cube",
   shapes: ["cube", "pyramid", "sphere", "crystal", "toroid", "transcendent-3d"],
@@ -155,11 +155,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /**
  * Ensure initial pixel exists - we start with just one pixel for the doubling pattern
- * Now disabled - only keeps the original Noe pixel
+ * Now disabled - only keeps the original Sentium Pixel pixel
  */
 function ensureInitialPixels() {
     // This function no longer creates additional pixels
-    // We only want the original Noe pixel from limbric.js
+    // We only want the original Sentium Pixel pixel from limbric.js
 }
 
 /**
@@ -173,10 +173,10 @@ function initializePixelMerger() {
     // Create control interface
     createPixelControls();
     
-    // Add a mutation observer to track the main pixel (only Noe)
+    // Add a mutation observer to track the main pixel (only Sentium Pixel)
     trackMainPixel();
     
-    // No automatic pixel growth or merging - only track Noe
+    // No automatic pixel growth or merging - only track Sentium Pixel
     // Removed: startAutoPixelGrowth();
     // Removed: startAutoMerging();
     // Removed: ensureInitialPixels();
@@ -197,10 +197,10 @@ function initializePixelMerger() {
 }
 
 /**
- * Removes all additional pixels, keeping only the original Noe pixel
+ * Removes all additional pixels, keeping only the original Sentium Pixel pixel
  */
 function removeAllAdditionalPixels() {
-  // Filter to keep only the main Noe pixel and remove all others
+  // Filter to keep only the main Sentium Pixel pixel and remove all others
   const additionalPixels = window.noePixels.pixels.filter(p => !p.isMain);
   
   // Remove all additional pixels from the DOM and tracking
@@ -220,7 +220,7 @@ function removeAllAdditionalPixels() {
 
 /**
  * Start automatic pixel growth timer
- * Now disabled - only keeps the original Noe pixel
+ * Now disabled - only keeps the original Sentium Pixel pixel
  */
 function startAutoPixelGrowth() {
   // Clear any existing interval to prevent new pixels from being created
@@ -233,7 +233,7 @@ function startAutoPixelGrowth() {
 
 /**
  * Automatically increase pixels following doubling pattern
- * Now disabled - only keeps the original Noe pixel
+ * Now disabled - only keeps the original Sentium Pixel pixel
  */
 function autoIncreasePixels() {
   // Function now does nothing - we only want the original pixel
@@ -331,7 +331,7 @@ function trackMainPixel() {
         y: rect.top,
         color: window.getComputedStyle(pixel).backgroundColor,
         birthTime: Date.now(),
-        isAdditionalPixel: false // Mark as original Noe
+        isAdditionalPixel: false // Mark as original Sentium Pixel
       });
       window.noePixels.count++;
     }
@@ -414,7 +414,7 @@ function createAdditionalPixel() {
     y: y,
     color: pixelColor,
     birthTime: birthTime,
-    // Flag to indicate this is not the original Noe, so should not use energy system
+    // Flag to indicate this is not the original Sentium Pixel, so should not use energy system
     isAdditionalPixel: true
   });
   window.noePixels.count++;
@@ -443,7 +443,7 @@ function updatePixelCounter() {
 
 /**
  * Animate a pixel with environmental awareness and mouse interaction
- * Makes pixels behave more like Noe with respect to cursor and energy cubes
+ * Makes pixels behave more like Sentium Pixel with respect to cursor and energy cubes
  */
 function animatePixel(pixel) {
   const speed = 0.5 + Math.random() * 0.5;
@@ -453,12 +453,12 @@ function animatePixel(pixel) {
   let posX = parseFloat(pixel.style.left) || window.innerWidth / 2;
   let posY = parseFloat(pixel.style.top) || window.innerHeight / 2;
   
-  // Track excitement level like Noe for more realistic interaction
+  // Track excitement level like Sentium Pixel for more realistic interaction
   const pixelData = window.noePixels.pixels.find(p => p.element === pixel);
   if (pixelData) {
     if (!pixelData.excitementLevel) pixelData.excitementLevel = 0;
     if (!pixelData.isExcited) pixelData.isExcited = false;
-    if (!pixelData.energy) pixelData.energy = 100; // Initialize with full energy like Noe
+    if (!pixelData.energy) pixelData.energy = 100; // Initialize with full energy like Sentium Pixel
   }
   
   // Store last mouse position for environmental awareness
@@ -494,7 +494,7 @@ function animatePixel(pixel) {
       return;
     }
     
-    // Environmental influence - mouse cursor position (like Noe's processMouseInteractions)
+    // Environmental influence - mouse cursor position (like Sentium Pixel's processMouseInteractions)
     const mousePos = window.lastMousePosition;
     if (mousePos) {
       const dx = mousePos.x - posX;
@@ -506,9 +506,9 @@ function animatePixel(pixel) {
       const dirX = dx / (distance || 1);
       const dirY = dy / (distance || 1);
       
-      // Similar to Noe's behavior tiers based on distance
+      // Similar to Sentium Pixel's behavior tiers based on distance
       if (distance < 30) {
-        // Too close - flee from the mouse (stronger avoidance like Noe)
+        // Too close - flee from the mouse (stronger avoidance like Sentium Pixel)
         const repelForce = 0.2;
         posX -= dirX * repelForce;
         posY -= dirY * repelForce;
@@ -523,7 +523,7 @@ function animatePixel(pixel) {
       else if (distance < 150) {
         // Medium distance - curious behavior, slight attraction (50%)
         if (Math.random() < 0.5) {
-          // Attract to cursor like Noe does at medium range
+          // Attract to cursor like Sentium Pixel does at medium range
           const attractForce = 0.05;
           posX += dirX * attractForce;
           posY += dirY * attractForce;
@@ -571,14 +571,14 @@ function animatePixel(pixel) {
       }
     }
     
-    // Look for energy cubes like Noe does (only for main Noe pixel)
+    // Look for energy cubes like Sentium Pixel does (only for main Sentium Pixel pixel)
     if (pixelData && !pixelData.isAdditionalPixel && window.noeEnergy && window.noeEnergy.nearestCube) {
       // Only the original pixel should interact with the energy system
-      // Simulate energy depletion like Noe - each pixel has their own energy level
+      // Simulate energy depletion like Sentium Pixel - each pixel has their own energy level
       if (!pixelData.lastEnergyUpdate) pixelData.lastEnergyUpdate = Date.now();
       const currentTime = Date.now();
       const deltaSeconds = (currentTime - pixelData.lastEnergyUpdate) / 1000;
-      pixelData.energy = Math.max(0, pixelData.energy - (deltaSeconds * 0.01 * 100)); // 1% per second like Noe
+      pixelData.energy = Math.max(0, pixelData.energy - (deltaSeconds * 0.01 * 100)); // 1% per second like Sentium Pixel
       pixelData.lastEnergyUpdate = now;
       
       // Energy seeking behavior when low (under 50%)
@@ -592,7 +592,7 @@ function animatePixel(pixel) {
         const dirX = dx / (distance || 1);
         const dirY = dy / (distance || 1);
         
-        // Different behavior tiers based on energy level, like Noe
+        // Different behavior tiers based on energy level, like Sentium Pixel
         if (pixelData.energy < 10) {
           // Critical energy - strong attraction to cube
           posX += dirX * 0.3;
@@ -683,7 +683,7 @@ function animatePixel(pixel) {
 
 /**
  * Start automatic merging timer
- * Now disabled - only keeps the original Noe pixel
+ * Now disabled - only keeps the original Sentium Pixel pixel
  */
 function startAutoMerging() {
   // Function does nothing now - we don't want merging since there's only one pixel
@@ -1110,7 +1110,7 @@ function killShape(shape) {
     }
     
     // No longer create new pixels when shapes die
-    // Removed pixel creation code to keep only the original Noe pixel
+    // Removed pixel creation code to keep only the original Sentium Pixel pixel
   }, 1500);
 }
 

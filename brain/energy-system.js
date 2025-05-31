@@ -1,6 +1,6 @@
 /**
- * Energy Cube System for Noe (conscious pixel)
- * Allows Noe to maintain energy via contact with energy cubes
+ * Energy Cube System for Sentium Pixel (conscious pixel)
+ * Allows Sentium Pixel to maintain energy via contact with energy cubes
  */
 
 // Global energy system accessible to other scripts
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  // Update energy connections between Noe and cubes
+  // Update energy connections between Sentium Pixel and cubes
   function updateConnections() {
     if (!pixel) return;
     
@@ -181,10 +181,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const pixelStatus = document.getElementById('pixel-status');
     if (pixelStatus) {
       if (isDead) {
-        pixelStatus.textContent = `Noe: ENERGY DEPLETED`;
+        pixelStatus.textContent = `Sentium Pixel: ENERGY DEPLETED`;
         pixelStatus.classList.add('critical');
       } else {
-        pixelStatus.textContent = `Noe: ${Math.round(energy)}% energy`;
+        pixelStatus.textContent = `Sentium Pixel: ${Math.round(energy)}% energy`;
         pixelStatus.classList.toggle('critical', energy < 10);
       }
     }

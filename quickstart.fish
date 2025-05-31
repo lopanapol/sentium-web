@@ -1,6 +1,6 @@
 #!/usr/bin/env fish
 
-echo "🌟 Starting Noe Pixel Demo Mode 🌟"
+echo "🌟 Starting Sentium Pixel Pixel Demo Mode 🌟"
 echo "=================================="
 echo ""
 
@@ -36,12 +36,12 @@ end
 echo "🔧 Setting up demo environment..."
 # Create .env file for demo mode
 echo "DEMO_MODE=true" > .env
-echo "NO_NOESIS_REQUIRED=true" >> .env
+echo "NO_SENTIUM_REQUIRED=true" >> .env
 echo "PORT=3000" >> .env
 
 # Start the server
 echo ""
-echo "🚀 Starting Noe in demo mode..."
+echo "🚀 Starting Sentium Pixel in demo mode..."
 echo "📱 Open your browser at http://localhost:3000"
 echo ""
 echo "Press Ctrl+C to stop the server"
@@ -53,4 +53,4 @@ npm start
 # Cleanup
 rm -f .env
 echo ""
-echo "👋 Thank you for trying Noe Pixel Demo!"
+echo "👋 Thank you for trying Sentium Pixel Pixel Demo!"

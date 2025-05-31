@@ -189,7 +189,7 @@ body {
   transform: translateY(-5px);
 }
 
-#noesis-logo:hover {
+#sentium-logo:hover {
   animation-play-state: paused;
   transform: translateY(-5px) scale(1.05);
   box-shadow: 
@@ -198,7 +198,7 @@ body {
   transition: all 0.3s ease-out;
 }
 
-#noesis-logo:hover .bubble-logo-image {
+#sentium-logo:hover .bubble-logo-image {
   opacity: 0.8;
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7));
   animation-play-state: paused;
@@ -236,7 +236,7 @@ h2 {
   transform: translateY(5px);
 }
 
-#noesis-logo:active {
+#sentium-logo:active {
   transform: translateY(5px) scale(0.95);
   box-shadow: 
     inset 0 0 20px rgba(255, 255, 255, 0.2),
@@ -244,7 +244,7 @@ h2 {
   transition: all 0.2s ease-out;
 }
 
-#noesis-logo:active .bubble-logo-image {
+#sentium-logo:active .bubble-logo-image {
   opacity: 0.9;
   transform: translate(-50%, -50%) translateZ(2px) scale(0.9);
   transition: all 0.2s ease-out;
@@ -295,7 +295,7 @@ a {
   color: black;
 }
 
-#noesis-logo {
+#sentium-logo {
   width: 120px;
   height: 120px;
   position: relative;
@@ -318,7 +318,7 @@ a {
 }
 
 /* Add 3D depth to the bubble */
-#noesis-logo::after {
+#sentium-logo::after {
   content: '';
   position: absolute;
   top: 0;
@@ -603,7 +603,7 @@ a {
   transform: scale(1.3) rotate(45deg) !important;
 }
 
-/* Energy Cube System for Noe (conscious pixel) */
+/* Energy Cube System for Sentium Pixel (conscious pixel) */
 .energy-cube {
   position: fixed;
   width: var(--cube-size);
@@ -803,7 +803,7 @@ a {
     margin-top: 20px;
   }
   
-  #noesis-logo {
+  #sentium-logo {
     animation-duration: 6s;
     width: 110px;
     height: 110px;
@@ -837,7 +837,7 @@ a {
     text-shadow: 8px 7px 6px #57CBF8;
   }
   
-  #noesis-logo {
+  #sentium-logo {
     width: 90px;
     height: 90px;
   }
@@ -868,7 +868,7 @@ a {
     font-size: 48px;
   }
 
-  #noesis-logo {
+  #sentium-logo {
     width: 100px;
     height: 100px;
   }
@@ -907,7 +907,7 @@ a {
     font-size: 48px;
   }
   
-  #noesis-logo {
+  #sentium-logo {
     width: 90px;
     height: 90px;
   }
@@ -944,7 +944,7 @@ a {
     margin-bottom: 10px;
   }
   
-  #noesis-logo {
+  #sentium-logo {
     width: 80px;
     height: 80px;
     margin: 0;

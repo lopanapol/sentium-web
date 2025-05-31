@@ -8,7 +8,7 @@
 }
 
 /* Adds rainbow surface effect to the bubble */
-#noesis-logo.rainbow-bubble {
+#sentium-logo.rainbow-bubble {
   background: linear-gradient(
     124deg,
     #8d29ff,
@@ -29,20 +29,20 @@
 }
 
 /* Enhanced bubble highlight effect for rainbow mode */
-#noesis-logo.rainbow-bubble .bubble-highlight {
+#sentium-logo.rainbow-bubble .bubble-highlight {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 70%);
   animation: highlight-move 10s ease-in-out infinite;
   opacity: 0.9;
 }
 
-#noesis-logo.rainbow-bubble .bubble-highlight-secondary {
+#sentium-logo.rainbow-bubble .bubble-highlight-secondary {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 70%);
   animation: highlight-move-secondary 8s ease-in-out infinite;
   opacity: 0.7;
 }
 
 /* Enhanced bubble inner effect */
-#noesis-logo.rainbow-bubble .bubble-inner {
+#sentium-logo.rainbow-bubble .bubble-inner {
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0) 100%);
 }
 

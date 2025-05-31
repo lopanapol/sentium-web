@@ -1,7 +1,7 @@
 # Changelog for v1.0.0
 
 ## Major Changes
-- Updated license to Noesis License
+- Updated license to Sentium License
 - Implemented energy system for conscious pixel
 
 ## Energy System Features

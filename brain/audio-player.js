@@ -1,8 +1,8 @@
-// Noesis Audio Player
+// Sentium Audio Player
 // Plays random music tracks from the sounds folder in an infinite loop
 
 /**
- * Audio player system for Noesis project
+ * Audio player system for Sentium project
  * Features:
  * - Plays music from the sounds folder
  * - Automatically changes to a random song when each song finishes

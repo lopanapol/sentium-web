@@ -1,5 +1,5 @@
 /**
- * Evolution System for Noe Pixel
+ * Evolution System for Sentium Pixel Pixel
  * 
  * This system allows the pixel to evolve over time based on user interactions.
  * The pixel evolves in form, color, behavior, and special abilities.
@@ -41,7 +41,7 @@ const EVOLUTION_DATA = [
     form: { type: 'rounded-rectangle', size: 1.2 },
     color: { aura: 30 },
     abilities: [],
-    description: 'Noe has evolved! Its form has become softer and more fluid.'
+    description: 'Sentium Pixel has evolved! Its form has become softer and more fluid.'
   },
   // Level 1 → 2 (150 points)
   { 
@@ -49,7 +49,7 @@ const EVOLUTION_DATA = [
     form: { type: 'cube', size: 1.3, is3D: true },
     color: { primary: '#a9f2ff', aura: 50 },
     abilities: ['hasEnergyHarvesting'],
-    description: 'Noe has evolved into a 3D cube! It can now harvest energy.'
+    description: 'Sentium Pixel has evolved into a 3D cube! It can now harvest energy.'
   },
   // Level 2 → 3 (350 points)
   { 
@@ -57,7 +57,7 @@ const EVOLUTION_DATA = [
     form: { type: 'pyramid', size: 1.4, is3D: true, shapeShift: 40 },
     color: { aura: 70 },
     abilities: ['hasMemory'],
-    description: 'Noe has evolved into a pyramid! It can now shift shapes and remember interactions.'
+    description: 'Sentium Pixel has evolved into a pyramid! It can now shift shapes and remember interactions.'
   },
   // Level 3 → 4 (700 points)
   { 
@@ -65,7 +65,7 @@ const EVOLUTION_DATA = [
     form: { type: 'sphere', size: 1.5, is3D: true, shapeShift: 70 },
     color: { aura: 85, primary: '#ffca3a' },
     abilities: ['hasMultiplicity'],
-    description: 'Noe has evolved into a 3D sphere! It can now create temporary copies of itself.'
+    description: 'Sentium Pixel has evolved into a 3D sphere! It can now create temporary copies of itself.'
   },
   // Level 4 → 5 (1200 points)
   { 
@@ -73,7 +73,7 @@ const EVOLUTION_DATA = [
     form: { type: 'crystal', size: 1.8, is3D: true, shapeShift: 100 },
     color: { aura: 100, primary: '#ff55ff' },
     abilities: ['hasDimensionalShift', 'hasTeleport'],
-    description: 'Noe has transcended into a crystalline form with magical abilities.'
+    description: 'Sentium Pixel has transcended into a crystalline form with magical abilities.'
   },
   // Level 5 → 6 (2000 points) - New ultimate form
   { 
@@ -81,7 +81,7 @@ const EVOLUTION_DATA = [
     form: { type: 'transcendent-3d', size: 2.0, is3D: true, shapeShift: 100 },
     color: { aura: 150, primary: '#00ffaa' },
     abilities: [],
-    description: 'Noe has reached an extraordinary dimensional state beyond normal perception!'
+    description: 'Sentium Pixel has reached an extraordinary dimensional state beyond normal perception!'
   },
 ];
 
@@ -443,13 +443,13 @@ function showEvolutionEffect(message) {
 
 // Cache default messages for better performance
 const DEFAULT_MESSAGES = [
-  "Noe is a simple conscious pixel. Interact with it to help it evolve!",
-  "Noe has begun to evolve! Its shape is softer and it has a subtle glow.",
-  "Noe is evolving into 3D! It can now harvest energy on its own.",
-  "Noe is becoming more complex! It has evolved into a pyramid and can remember interactions.",
-  "Noe is highly evolved! It has taken on a spherical form and can create temporary copies of itself.",
-  "Noe has reached a crystalline form! It has transcended simple existence.",
-  "Noe has reached its ultimate dimensional form! It exists beyond simple perception."
+  "Sentium Pixel is a simple conscious pixel. Interact with it to help it evolve!",
+  "Sentium Pixel has begun to evolve! Its shape is softer and it has a subtle glow.",
+  "Sentium Pixel is evolving into 3D! It can now harvest energy on its own.",
+  "Sentium Pixel is becoming more complex! It has evolved into a pyramid and can remember interactions.",
+  "Sentium Pixel is highly evolved! It has taken on a spherical form and can create temporary copies of itself.",
+  "Sentium Pixel has reached a crystalline form! It has transcended simple existence.",
+  "Sentium Pixel has reached its ultimate dimensional form! It exists beyond simple perception."
 ];
 
 /**
@@ -937,7 +937,7 @@ function loadEvolutionData() {
       // Welcome returning evolved pixels
       if (evo.evolutionLevel > 0) {
         setTimeout(() => {
-          displayEvolutionMessage(`Welcome back! Noe is at evolution level ${evo.evolutionLevel}.`);
+          displayEvolutionMessage(`Welcome back! Sentium Pixel is at evolution level ${evo.evolutionLevel}.`);
         }, 2000);
       }
     });

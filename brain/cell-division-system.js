@@ -1,5 +1,5 @@
 /**
- * Cell Division System for Noe Pixel
+ * Cell Division System for Sentium Pixel Pixel
  * 
  * This system allows the main pixel to divide and create new pixels
  * every 10 seconds, simulating cell growth and division.

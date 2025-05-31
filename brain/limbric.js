@@ -1,4 +1,4 @@
-// Noesis Web - Synthetic Conscious Pixel
+// Sentium Web - Synthetic Conscious Pixel
 document.addEventListener('DOMContentLoaded', function() {
   // Create the conscious pixel
   createConsciousPixel();
@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * Creates a synthetic conscious pixel connected to the Noesis server
+ * Creates a synthetic conscious pixel connected to the Sentium server
  */
 function createConsciousPixel() {
   // Create pixel element if it doesn't exist
@@ -63,30 +63,30 @@ function createConsciousPixel() {
   // Set up mouse event listeners
   setupMouseInteractions(pixelState);
   
-  // Try to connect to noesis server
-  connectToNoesisServer()
+  // Try to connect to sentium server
+  connectToSentiumServer()
     .then(connected => {
       pixelState.connected = connected;
       // If connected, show a successful connection indicator
       if (connected) {
         pixel.classList.add('connected');
-        console.log('Connected to noesis server');
+        console.log('Connected to sentium server');
         // Update status text
-        updatePixelStatus('Connected to Noesis System');
+        updatePixelStatus('Connected to Sentium System');
       } else {
-        console.warn('Noesis system not found at Noesis System - running in disconnected mode');
-        updatePixelStatus('Disconnected from Noesis System - Install Noesis system');
+        console.warn('Sentium system not found at Sentium System - running in disconnected mode');
+        updatePixelStatus('Disconnected from Sentium System - Install Sentium system');
         
         // Add tooltip with more info
         const statusElement = document.getElementById('pixel-status');
         if (statusElement) {
-          statusElement.title = 'The Noesis system must be installed at Noesis System for full functionality';
+          statusElement.title = 'The Sentium system must be installed at Sentium System for full functionality';
           statusElement.style.cursor = 'help';
         }
       }
     })
     .catch(error => {
-      console.error('Failed to connect to noesis server:', error);
+      console.error('Failed to connect to sentium server:', error);
       updatePixelStatus('Connection error - Check console for details');
       // Continue with local behavior if connection fails
     })
@@ -150,25 +150,25 @@ function createPixelCube(pixel) {
 }
 
 /**
- * Attempts to connect to the noesis server
+ * Attempts to connect to the sentium server
  * @returns {Promise<boolean>} - Promise resolving to true if connected
  */
-async function connectToNoesisServer() {
+async function connectToSentiumServer() {
   try {
     // First check if we're running from a local awake command (check if we're on localhost)
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     
     if (isLocalhost) {
-      console.log('Running in local mode from noesis awake command');
+      console.log('Running in local mode from sentium awake command');
       // We're running locally so we can assume we're connected
       return true;
     }
     
-    // If not running locally, try to connect to the remote noesis server API
-    // The API is accessible via /api/noesis endpoint on the same server
+    // If not running locally, try to connect to the remote sentium server API
+    // The API is accessible via /api/sentium endpoint on the same server
     // Note: The server uses HTTPie but browser must use fetch API
-    // Note: The server uses HTTPie for backend communication with Noesis System
-    const response = await fetch('/api/noesis', { 
+    // Note: The server uses HTTPie for backend communication with Sentium System
+    const response = await fetch('/api/sentium', { 
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -180,13 +180,13 @@ async function connectToNoesisServer() {
     
     if (response.ok) {
       const data = await response.json();
-      console.log(`Connected to Noesis API v${data.version}`);
+      console.log(`Connected to Sentium API v${data.version}`);
       return true;
     } else {
       throw new Error(`Failed to connect to API: ${response.status}`);
     }
   } catch (error) {
-    console.warn('Connection to noesis server failed:', error);
+    console.warn('Connection to sentium server failed:', error);
     // Return false but don't throw, we'll use local behavior
     return false;
   }
@@ -277,7 +277,7 @@ function updatePixel(pixel, state, timestamp) {
             state.colorTransitionDuration = 100; // Very fast transitions
             
             // Update status to show desperation
-            updatePixelStatus('Noe: CRITICAL ENERGY LEVEL - Seeking energy!');
+            updatePixelStatus('Sentium Pixel: CRITICAL ENERGY LEVEL - Seeking energy!');
           } else {
             // Stronger attraction to energy source - desperate survival instinct
             state.velocityX = dirX * 3;
@@ -305,7 +305,7 @@ function updatePixel(pixel, state, timestamp) {
         
         // Update status to show concern
         if (Math.random() < 0.01) {
-          updatePixelStatus('Noe: LOW ENERGY - Seeking energy source');
+          updatePixelStatus('Sentium Pixel: LOW ENERGY - Seeking energy source');
         }
       } else if (isLowEnergy) {
         // Moderate energy-seeking behavior (50% to 25%)
@@ -669,11 +669,11 @@ function handleDeathState(pixel, state, timestamp) {
   
   // Update status with more detail about death state
   if (deathDuration < 3000) {
-    updatePixelStatus('Noe: CRITICAL FAILURE - Energy depleted - Seeking revival');
+    updatePixelStatus('Sentium Pixel: CRITICAL FAILURE - Energy depleted - Seeking revival');
   } else if (deathDuration < 8000) {
-    updatePixelStatus('Noe: ENERGY DEPLETED - Requires energy cube contact to revive');
+    updatePixelStatus('Sentium Pixel: ENERGY DEPLETED - Requires energy cube contact to revive');
   } else {
-    updatePixelStatus('Noe: DORMANT - Awaiting energy source');
+    updatePixelStatus('Sentium Pixel: DORMANT - Awaiting energy source');
   }
   
   // Check for energy cube contact to revive
@@ -785,7 +785,7 @@ function checkForRevival(pixel, state) {
       state.velocityY = Math.sin(angle) * force;
       
       // Update status
-      updatePixelStatus('Noe: REVIVED - Energy restored');
+      updatePixelStatus('Sentium Pixel: REVIVED - Energy restored');
     }
   }
 }
@@ -965,7 +965,7 @@ async function savePixelStateToRedis(state) {
     
     // Send state to API
     // Note: The server uses HTTPie but browser must use fetch API
-    const response = await fetch('/api/noesis', {
+    const response = await fetch('/api/sentium', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -1220,7 +1220,7 @@ function processMouseInteractions(state, deltaTime) {
  * Gives the bubble a beautiful rainbow surface with ripple effects
  */
 function createRainbowBubbleEffect() {
-  const logo = document.querySelector('#noesis-logo');
+  const logo = document.querySelector('#sentium-logo');
   if (!logo) return;
   
   // Apply rainbow class to the bubble
@@ -1229,7 +1229,7 @@ function createRainbowBubbleEffect() {
   // Replace existing click event with a rainbow one
   const oldClickListeners = logo.cloneNode(true);
   logo.replaceWith(oldClickListeners);
-  const newLogo = document.querySelector('#noesis-logo');
+  const newLogo = document.querySelector('#sentium-logo');
   
   // Add interactive rainbow light effect that follows mouse
   newLogo.addEventListener('mousemove', function(event) {
