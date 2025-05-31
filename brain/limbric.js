@@ -161,7 +161,21 @@ async function connectToSentiumServer() {
       return true;
     }
     
-    // If not running locally, try to connect to the remote sentium server API
+    // If we're on GitHub Pages, try to connect to local Sentium server first
+    const isGitHubPages = window.location.hostname.includes('github.io');
+    if (isGitHubPages) {
+      try {
+        const localConnected = await connectToLocalSentiumServer();
+        if (localConnected) {
+          console.log('Connected to local Sentium server from GitHub Pages');
+          return true;
+        }
+      } catch (localError) {
+        console.log('Could not connect to local server, falling back to remote API');
+      }
+    }
+    
+    // If not running locally or local connection failed, try the remote sentium server API
     // The API is accessible via /api/sentium endpoint on the same server
     // Note: The server uses HTTPie but browser must use fetch API
     // Note: The server uses HTTPie for backend communication with Sentium System
@@ -185,6 +199,48 @@ async function connectToSentiumServer() {
   } catch (error) {
     console.warn('Connection to sentium server failed:', error);
     // Return false but don't throw, we'll use local behavior
+    return false;
+  }
+}
+
+/**
+ * Connects to a local Sentium server running on localhost:3000
+ * This allows GitHub Pages hosted pixel to connect to a local Sentium server
+ * @returns {Promise<boolean>} - Promise resolving to true if connected
+ */
+async function connectToLocalSentiumServer() {
+  try {
+    // The local server URL - this can be changed based on your config
+    const localServerUrl = 'http://localhost:3000/api/pixel';
+    
+    const response = await fetch(localServerUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        action: 'connect'
+      }),
+      mode: 'cors' // Enable CORS for cross-origin requests
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        console.log(`Connected to local Sentium server v${data.version}`);
+        
+        // Store the local server URL for future API calls
+        window.localServerUrl = localServerUrl;
+        
+        // Update status
+        updatePixelStatus('Connected to local Sentium server');
+        
+        return true;
+      }
+    }
+    return false;
+  } catch (error) {
+    console.warn('Connection to local Sentium server failed:', error);
     return false;
   }
 }
@@ -960,8 +1016,34 @@ async function savePixelStateToRedis(state) {
       timestamp: new Date().toISOString()
     };
     
-    // Send state to API
-    // Note: The server uses HTTPie but browser must use fetch API
+    // Try the local server first if we're hosted on GitHub Pages
+    const isGitHubPages = window.location.hostname.includes('github.io');
+    
+    if (isGitHubPages) {
+      try {
+        // Use the local server endpoint
+        const localServerUrl = 'http://localhost:3000/api/pixel';
+        const localResponse = await fetch(localServerUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            action: 'saveState',
+            pixelState: stateToSave
+          })
+        });
+        
+        if (localResponse.ok) {
+          console.log('Pixel state saved to local Sentium server');
+          return;
+        }
+      } catch (localError) {
+        console.warn('Failed to connect to local server, falling back to remote API:', localError);
+      }
+    }
+    
+    // Fall back to the standard endpoint
     const response = await fetch('/api/sentium', {
       method: 'POST',
       headers: {
@@ -1263,4 +1345,46 @@ function createRainbowBubbleEffect() {
   });
   
   console.log('Rainbow bubble effect applied');
+}
+
+/**
+ * Connects to a local Sentium server running on localhost:3000
+ * This allows GitHub Pages hosted pixel to connect to a local Sentium server
+ * @returns {Promise<boolean>} - Promise resolving to true if connected
+ */
+async function connectToLocalSentiumServer() {
+  try {
+    // The local server URL - this can be changed based on your config
+    const localServerUrl = 'http://localhost:3000/api/pixel';
+    
+    const response = await fetch(localServerUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        action: 'connect'
+      }),
+      mode: 'cors' // Enable CORS for cross-origin requests
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        console.log(`Connected to local Sentium server v${data.version}`);
+        
+        // Store the local server URL for future API calls
+        window.localServerUrl = localServerUrl;
+        
+        // Update status
+        updatePixelStatus('Connected to local Sentium server');
+        
+        return true;
+      }
+    }
+    return false;
+  } catch (error) {
+    console.warn('Connection to local Sentium server failed:', error);
+    return false;
+  }
 }
