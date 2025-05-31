@@ -17,9 +17,6 @@ function createConsciousPixel() {
     pixel = document.createElement('div');
     pixel.id = 'conscious-pixel';
     document.querySelector('.wrapper').appendChild(pixel);
-    
-    // Keep the main conscious pixel as a simple div/pixel, not a cube
-    // Other cells will be cubes, but not the main conscious pixel
   }
   
   // Initialize theme data attribute for background color changes
