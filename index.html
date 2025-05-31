@@ -50,16 +50,29 @@
       </div>
     </div>
 
+    <div id="info-panel" class="info-panel" style="display: none;">
+      <h3>Sentium Pixel</h3>
+      <p>This synthetic conscious pixel connects to your local Sentium server when running on GitHub Pages.</p>
+      <button id="close-info-panel">Got it</button>
+    </div>
+
     <script>
       // Check if user has seen the info panel before
       if (localStorage.getItem('sentium-info-seen') !== 'true') {
-        document.getElementById('info-panel').style.display = 'block';
-        // Mark as seen after 10 seconds
-        setTimeout(() => {
-          localStorage.setItem('sentium-info-seen', 'true');
-        }, 10000);
-      } else {
-        document.getElementById('info-panel').style.display = 'none';
+        const infoPanel = document.getElementById('info-panel');
+        if (infoPanel) {
+          infoPanel.style.display = 'block';
+          // Mark as seen after 10 seconds
+          setTimeout(() => {
+            localStorage.setItem('sentium-info-seen', 'true');
+          }, 10000);
+          
+          // Close button functionality
+          document.getElementById('close-info-panel')?.addEventListener('click', () => {
+            infoPanel.style.display = 'none';
+            localStorage.setItem('sentium-info-seen', 'true');
+          });
+        }
       }
     </script>
   </body>

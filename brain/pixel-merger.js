@@ -1378,7 +1378,7 @@ function showLogoPixelInfo() {
   console.log('Using logo pixels for pixel colors and behavior');
 }
 
-// Make sure the function is defined before it's called
+// Make sure the function is globally available
 window.showLogoPixelInfo = showLogoPixelInfo;
 
 /**
