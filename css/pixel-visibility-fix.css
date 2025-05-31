@@ -1,0 +1,38 @@
+/* 
+ * Emergency pixel visibility fix 
+ * This file ensures pixels are highly visible on the page
+ */
+
+#conscious-pixel {
+  position: absolute;
+  width: 10px !important;
+  height: 10px !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 0 15px 5px #ffffff !important;
+  border-radius: 50%;
+  z-index: 9999;
+  pointer-events: auto;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+.additional-pixel {
+  position: absolute;
+  width: 10px !important; 
+  height: 10px !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 0 15px 5px #ffffff !important;
+  border-radius: 50%;
+  z-index: 9990;
+  pointer-events: none;
+  animation: pixel-birth 0.5s forwards;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+@keyframes pixel-birth {
+  0% { transform: scale(0) rotate(0deg); opacity: 0; }
+  100% { transform: scale(1) rotate(360deg); opacity: 1; }
+}
