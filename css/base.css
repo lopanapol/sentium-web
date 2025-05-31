@@ -456,7 +456,7 @@ a {
   width: 12px;
   height: 12px;
   background-color: rgb(165, 46, 255);
-  /* 3D cube - no background color needed as faces will handle it */
+  border-radius: 2px; /* Slight rounding for a softer look */
   z-index: 9999;
   pointer-events: none;
   transition: opacity 0.2s ease, box-shadow 0.3s ease;
@@ -464,11 +464,12 @@ a {
   opacity: 0.7;
   will-change: transform, opacity, box-shadow;
   transform-origin: center center;
-  transform-style: preserve-3d;
+  /* Remove preserve-3d since we're not using a cube anymore */
 }
 
 #conscious-pixel.connected {
-  animation: connected-pulse 4s infinite alternate, pixel-rotate 8s linear infinite;
+  animation: connected-pulse 4s infinite alternate;
+  /* Removed pixel-rotate animation since the main pixel is no longer a cube */
 }
 
 #conscious-pixel:hover {
