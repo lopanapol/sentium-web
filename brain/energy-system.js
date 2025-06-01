@@ -1,5 +1,5 @@
 /**
- * Energy Cube System for Sentium Pixel (conscious pixel)
+ * Energy System for Sentium Pixel (conscious pixel)
  * Allows Sentium Pixel to maintain energy via contact with energy cubes
  */
 
@@ -14,38 +14,51 @@ window.noeEnergy = {
 // Global connection state
 window.localConnection = {
   isConnected: false,
-  serverUrl: 'http://localhost:8000/api/sentium',
+  serverUrl: 'http://localhost:3000/api/pixel',
   
   // Attempt connection to local server
   connect: async function() {
     if (this.isConnected) return true;
     
     try {
-      // Send a test request to the server
-      const response = await fetch(this.serverUrl, {
-        method: 'GET',
-        mode: 'cors',
-        headers: {
-          'Accept': 'application/json',
-          'Origin': window.location.origin
-        }
-      });
+      // Try multiple server endpoints for compatibility with different Sentium server versions
+      const serverUrls = [
+        this.serverUrl,
+        'http://localhost:3000',
+        'http://localhost:3000/api/sentium',
+        'http://127.0.0.1:3000/api/pixel'
+      ];
       
-      if (response.ok) {
-        console.log('Connected to local Sentium server');
-        this.isConnected = true;
-        return true;
-      } else {
-        console.error('Failed to connect to local Sentium server:', response.status);
-        // Even though the response is not OK, if it's a 404 or 501, we'll treat it as "connected"
-        // since we're seeing valid responses from the server
-        if (response.status === 404 || response.status === 501) {
-          console.log('Server responded with error but connection exists');
-          this.isConnected = true;
-          return true;
+      for (const url of serverUrls) {
+        try {
+          console.log(`Attempting to connect to ${url}...`);
+          // Send a test request to the server
+          const response = await fetch(url, {
+            method: 'GET',
+            mode: 'cors',
+            headers: {
+              'Accept': 'application/json',
+              'Origin': window.location.origin
+            }
+          });
+          
+          // If we get any response, consider it connected (even with status 404 or 501)
+          // This is because different Sentium server versions respond differently
+          if (response.status) {
+            console.log(`Connected to Sentium server at ${url} (status: ${response.status})`);
+            this.isConnected = true;
+            this.serverUrl = url; // Remember which URL worked
+            return true;
+          }
+        } catch (err) {
+          console.log(`Failed to connect to ${url}: ${err.message}`);
+          // Continue trying other URLs
         }
-        return false;
       }
+      
+      // If we reach here, all connection attempts failed
+      console.error('All connection attempts failed');
+      return false;
     } catch (error) {
       console.error('Connection error:', error);
       return false;
