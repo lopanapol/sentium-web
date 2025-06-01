@@ -408,11 +408,13 @@ async function connectToLocalSentiumServer() {
     // The local server URL - use custom if provided, otherwise default
     let localServerUrl = customServer || 'http://localhost:3000/api/pixel';
     
-    // Use the test-connection endpoint instead of /api/pixel when on sentium.dev
-    // This endpoint has more permissive CORS settings
+    // Try both /api/pixel and /api/test-connection endpoints when on sentium.dev
+    // The energy-system.js will determine which one works and store that URL
     if (window.location.hostname === 'sentium.dev' && !customServer) {
+      // Instead of forcing a single URL, we'll let the energy system try multiple endpoints
+      // Note that we still pass the test-connection endpoint here for backward compatibility
       localServerUrl = 'http://localhost:3000/api/test-connection';
-      console.log('Using specialized test connection endpoint for sentium.dev');
+      console.log('Connection handling moved to energy-system.js which will try multiple endpoints');
     }
     
     // Log attempt with full details for debugging
@@ -1311,11 +1313,14 @@ async function savePixelStateToRedis(state) {
       timestamp: new Date().toISOString()
     };
     
-    // Check if we have a local server URL (set when successfully connected to local server)
-    if (window.localServerUrl) {
+    // Check if we have a local server URL from the energy system (which handles connection)
+    const serverUrl = (window.noeEnergy && window.noeEnergy.getServerUrl) ? 
+      window.noeEnergy.getServerUrl() : window.localServerUrl;
+      
+    if (serverUrl) {
       try {
-        console.log('Using stored local server URL for state saving:', window.localServerUrl);
-        const localResponse = await fetch(window.localServerUrl, {
+        console.log('Using server URL for state saving:', serverUrl);
+        const localResponse = await fetch(serverUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -1352,9 +1357,12 @@ async function savePixelStateToRedis(state) {
     
     if (isGitHubPages || isSentiumDev || forceLocalMode) {
       try {
-        // Use the local server endpoint or custom server from URL parameters
+        // Use the energy system's server URL if available, fall back to custom server from URL or default
         const customServer = params.get('server');
-        const localServerUrl = customServer || 'http://localhost:3000/api/pixel';
+        const localServerUrl = 
+          (window.noeEnergy && window.noeEnergy.getServerUrl && window.noeEnergy.getServerUrl()) || 
+          customServer || 
+          'http://localhost:3000/api/pixel';
         
         console.log('Trying to save state to local server:', localServerUrl);
         const localResponse = await fetch(localServerUrl, {

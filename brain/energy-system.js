@@ -23,10 +23,12 @@ window.localConnection = {
     try {
       // Try multiple server endpoints for compatibility with different Sentium server versions
       const serverUrls = [
-        this.serverUrl,
-        'http://localhost:3000',
-        'http://localhost:3000/api/sentium',
-        'http://127.0.0.1:3000/api/pixel'
+        'http://localhost:3000/api/pixel',  // Primary endpoint
+        this.serverUrl,                     // Default or previously working URL
+        'http://localhost:3000',            // Root endpoint
+        'http://localhost:3000/api/sentium',// Alternative API endpoint
+        'http://localhost:3000/api/test-connection', // Specialized test endpoint
+        'http://127.0.0.1:3000/api/pixel'   // Alternative hostname
       ];
       
       for (const url of serverUrls) {
@@ -45,10 +47,23 @@ window.localConnection = {
           // If we get any response, consider it connected (even with status 404 or 501)
           // This is because different Sentium server versions respond differently
           if (response.status) {
-            console.log(`Connected to Sentium server at ${url} (status: ${response.status})`);
-            this.isConnected = true;
-            this.serverUrl = url; // Remember which URL worked
-            return true;
+            // For 200-299 status codes, we're definitely connected
+            const isSuccessStatus = response.status >= 200 && response.status < 300;
+            // For 404 and some other status codes, the server is running but endpoint might be wrong
+            const isAcceptableError = [404, 405, 501].includes(response.status);
+            
+            if (isSuccessStatus || isAcceptableError) {
+              console.log(`Connected to Sentium server at ${url} (status: ${response.status})`);
+              this.isConnected = true;
+              this.serverUrl = url; // Remember which URL worked
+              
+              // Store the working URL globally for other scripts
+              if (window) window.localServerUrl = url;
+              
+              return true;
+            } else {
+              console.log(`Server responded but with unexpected status: ${response.status}`);
+            }
           }
         } catch (err) {
           console.log(`Failed to connect to ${url}: ${err.message}`);
@@ -58,6 +73,14 @@ window.localConnection = {
       
       // If we reach here, all connection attempts failed
       console.error('All connection attempts failed');
+      
+      // Display detailed connection debug info
+      console.log('=== CONNECTION ATTEMPTS DEBUG ===');
+      console.log(`Host: ${window.location.hostname}`);
+      console.log(`Protocol: ${window.location.protocol}`);
+      console.log(`Tried URLs: ${serverUrls.join(', ')}`);
+      console.log('=============================');
+      
       return false;
     } catch (error) {
       console.error('Connection error:', error);
@@ -68,7 +91,13 @@ window.localConnection = {
   // Disconnect from server
   disconnect: function() {
     this.isConnected = false;
+    // Don't clear the serverUrl as we want to remember it for future connections
     console.log('Disconnected from local Sentium server');
+    
+    // Notify any observers about the disconnection
+    if (window.dispatchEvent) {
+      window.dispatchEvent(new CustomEvent('sentium:disconnected'));
+    }
   }
 };
 
@@ -634,6 +663,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add a special method for checking if the pixel is in death state
     window.noeEnergy.isDeathState = function() {
       return energy <= 0;
+    };
+    
+    // Expose the successful connection URL for other scripts to use
+    window.noeEnergy.getServerUrl = function() {
+      return window.localConnection ? window.localConnection.serverUrl : null;
     };
     
     // Initialize the movement timestamp
