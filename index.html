@@ -22,6 +22,7 @@
     <script src="brain/evolution-system.js" defer></script>
     <script src="brain/pixel-merger.js" defer></script>
     <script src="brain/cell-division-system.js" defer></script>
+    <script src="brain/logo-animation-control.js" defer></script>
   <script>
     // Add connection testing functionality when the page loads
     document.addEventListener('DOMContentLoaded', function() {
@@ -242,11 +243,12 @@
       <div class="content" role="main">
         <div id="sentium-logo" 
           class="illustration bubble-logo" 
-          title="Click the bubble!">
+          title="Click to pause/resume all animations">
           <div class="bubble-inner"></div>
           <div class="bubble-highlight"></div>
           <div class="bubble-highlight-secondary"></div>
           <img src="images/sentium-logo-black.png" class="bubble-logo-image" alt="Sentium Logo">
+          <div class="pause-indicator"></div>
         </div>
         <h1 class="title">sentium<span class="dev-badge">.dev</span></h1>
         <div class="instructions" id="web-info">
