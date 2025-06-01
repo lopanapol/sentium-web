@@ -147,11 +147,146 @@ function createPixelCube(pixel) {
 }
 
 /**
+ * Tests connection to the test endpoint on different servers
+ * This helps users diagnose where the connectivity issue might be
+ */
+async function testMultipleServers() {
+  const servers = [
+    'http://localhost:3000/api/test-connection',
+    'http://localhost:3001/api/test-connection',
+    'http://127.0.0.1:3000/api/test-connection'
+  ];
+  
+  const results = [];
+  
+  // Create or update the debug log UI
+  let debugLog = document.getElementById('server-test-results');
+  if (!debugLog) {
+    debugLog = document.createElement('div');
+    debugLog.id = 'server-test-results';
+    debugLog.style.cssText = 'position: fixed; top: 100px; right: 20px; background: rgba(0,0,0,0.85); ' + 
+                            'color: #fff; padding: 15px; border-radius: 5px; font-family: monospace; ' + 
+                            'max-width: 400px; z-index: 1000; font-size: 12px; border: 1px solid #444;';
+    document.body.appendChild(debugLog);
+  }
+  
+  debugLog.innerHTML = '<h3 style="margin: 0 0 10px 0; color: #0f0;">Testing Server Connections...</h3>';
+  
+  // Test each server
+  for (const server of servers) {
+    debugLog.innerHTML += `<div>Testing ${server}... <span id="test-${encodeURIComponent(server)}">⏳</span></div>`;
+    
+    try {
+      const start = Date.now();
+      const response = await fetch(server, { 
+        method: 'GET',
+        mode: 'cors',
+        headers: { 'Accept': 'application/json' },
+        // 3 second timeout
+        signal: AbortSignal.timeout(3000)
+      });
+      
+      const elapsed = Date.now() - start;
+      const testResult = document.getElementById(`test-${encodeURIComponent(server)}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        testResult.innerHTML = `✅ Success (${elapsed}ms)`;
+        testResult.style.color = '#0f0';
+        results.push({ server, success: true, elapsed, data });
+      } else {
+        testResult.innerHTML = `❌ Failed (${response.status})`;
+        testResult.style.color = '#f00';
+        results.push({ server, success: false, status: response.status });
+      }
+    } catch (error) {
+      const testResult = document.getElementById(`test-${encodeURIComponent(server)}`);
+      testResult.innerHTML = `❌ Error: ${error.name}`;
+      testResult.style.color = '#f00';
+      results.push({ server, success: false, error: error.message });
+    }
+  }
+  
+  // Add a conclusion about what to do
+  let advice = '';
+  if (results.some(r => r.success)) {
+    const bestServer = results.filter(r => r.success).sort((a, b) => a.elapsed - b.elapsed)[0];
+    advice = `
+      <div style="margin-top: 15px; border-top: 1px solid #444; padding-top: 10px;">
+        <strong style="color: #0f0;">✅ Connection possible!</strong>
+        <p>Use this URL parameter to connect:</p>
+        <code style="background: #333; padding: 3px;">?server=${bestServer.server.replace('/api/test-connection', '/api/pixel')}&local=true</code>
+        <button id="apply-best-server" style="display: block; margin-top: 10px; background: #5e42a6; color: white; border: none; padding: 5px 10px; cursor: pointer; width: 100%;">Apply & Reload</button>
+      </div>
+    `;
+  } else {
+    advice = `
+      <div style="margin-top: 15px; border-top: 1px solid #444; padding-top: 10px;">
+        <strong style="color: #f00;">❌ No servers reachable</strong>
+        <p>Try these steps:</p>
+        <ol style="padding-left: 20px; margin-top: 5px;">
+          <li>Check if server is running: <code>node server.js</code></li>
+          <li>Install a CORS browser extension</li>
+          <li>Try using IP 127.0.0.1 instead of localhost</li>
+          <li>Check firewall settings</li>
+        </ol>
+      </div>
+    `;
+  }
+  
+  debugLog.innerHTML += advice;
+  
+  // Add event listener to the apply button
+  setTimeout(() => {
+    const applyButton = document.getElementById('apply-best-server');
+    if (applyButton) {
+      applyButton.addEventListener('click', () => {
+        const bestServer = results.filter(r => r.success).sort((a, b) => a.elapsed - b.elapsed)[0];
+        const url = new URL(window.location);
+        url.searchParams.set('server', bestServer.server.replace('/api/test-connection', '/api/pixel'));
+        url.searchParams.set('local', 'true');
+        window.location.href = url.toString();
+      });
+    }
+  }, 100);
+  
+  return results;
+}
+
+/**
+ * Shows debugging information for connection issues
+ */
+function showConnectionDebugInfo() {
+  console.log('=== CONNECTION DEBUG INFO ===');
+  console.log('Hostname:', window.location.hostname);
+  console.log('GitHub Pages detection:', window.location.hostname.includes('github.io'));
+  console.log('Protocol:', window.location.protocol);
+  console.log('Parameters:', new URLSearchParams(window.location.search).toString());
+  console.log('===========================');
+  
+  const debugElement = document.getElementById('debug-info');
+  if (debugElement) {
+    debugElement.textContent = `Debug: ${window.location.hostname} | GitHub Pages: ${window.location.hostname.includes('github.io')} | Use ?local=true to force local connection`;
+    debugElement.style.display = 'block';
+  } else {
+    // Create debug element if it doesn't exist
+    const debugDiv = document.createElement('div');
+    debugDiv.id = 'debug-info';
+    debugDiv.style.cssText = 'position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.7); color: #0f0; padding: 5px; font-size: 12px; z-index: 1000; max-width: 80%;';
+    debugDiv.textContent = `Debug: ${window.location.hostname} | GitHub Pages: ${window.location.hostname.includes('github.io')} | Use ?local=true to force local connection`;
+    document.body.appendChild(debugDiv);
+  }
+}
+
+/**
  * Attempts to connect to the sentium server
  * @returns {Promise<boolean>} - Promise resolving to true if connected
  */
 async function connectToSentiumServer() {
   try {
+    // Show detailed connection debug info at startup
+    showConnectionDebugInfo();
+    
     // First check if we're running from a local awake command (check if we're on localhost)
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     
@@ -161,19 +296,64 @@ async function connectToSentiumServer() {
       return true;
     }
     
-    // Check URL parameters for debug mode - allows testing with ?local=true
+    // Check URL parameters for connection options
     const params = new URLSearchParams(window.location.search);
     const forceLocalMode = params.get('local') === 'true';
+    const skipLocalAttempt = params.get('skipLocal') === 'true';
+    const customServerUrl = params.get('server');
     
     // If we're on GitHub Pages, try to connect to local Sentium server first
-    const isGitHubPages = window.location.hostname.includes('github.io');
+    const isGitHubPages = window.location.hostname.includes('github.io') || 
+                         window.location.hostname.includes('lopanapol.github.io');
+    
     if (isGitHubPages || forceLocalMode) {
       console.log('GitHub Pages detected or local mode forced - attempting local connection');
+      
+      // Create a visual indicator for users when trying to connect to local server
+      const statusElement = document.getElementById('pixel-status');
+      if (statusElement) {
+        statusElement.textContent = 'Attempting to connect to local Sentium server...';
+        statusElement.style.color = '#ffcc00';
+      }
+      
       try {
         const localConnected = await connectToLocalSentiumServer();
         if (localConnected) {
           console.log('Connected to local Sentium server from GitHub Pages');
           return true;
+        } else {
+          // Create a help message for users with instructions
+          const helpMsg = document.createElement('div');
+          helpMsg.className = 'connection-help';
+          helpMsg.innerHTML = `
+            <h3>Connection to local Sentium server failed</h3>
+            <p>To connect GitHub Pages to your local Sentium server:</p>
+            <ol>
+              <li>Make sure your Sentium server is running locally: <code>node server.js</code></li>
+              <li>Install a CORS browser extension to bypass security restrictions</li>
+              <li>Or use <code>?local=true&debug=true</code> in the URL to force local connection</li>
+            </ol>
+          `;
+          helpMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: rgba(0,0,0,0.8); color: #fff; padding: 15px; border-radius: 5px; z-index: 1000; max-width: 400px; display: none;';
+          
+          document.body.appendChild(helpMsg);
+          
+          // Add a button to show/hide the help message
+          const helpBtn = document.createElement('button');
+          helpBtn.textContent = 'Connection Help';
+          helpBtn.style.cssText = 'position: fixed; top: 10px; right: 10px; background: #ff9900; color: #000; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; z-index: 1001;';
+          helpBtn.onclick = function() {
+            const helpEl = document.querySelector('.connection-help');
+            if (helpEl.style.display === 'none') {
+              helpEl.style.display = 'block';
+              this.textContent = 'Hide Help';
+            } else {
+              helpEl.style.display = 'none';
+              this.textContent = 'Connection Help';
+            }
+          };
+          
+          document.body.appendChild(helpBtn);
         }
       } catch (localError) {
         console.log('Could not connect to local server, falling back to remote API:', localError);
@@ -215,9 +395,13 @@ async function connectToSentiumServer() {
  */
 async function connectToLocalSentiumServer() {
   try {
+    // Show detailed connection debug info
+    showConnectionDebugInfo();
+  
     // Allow custom server URL via URL parameter (for testing different ports/hosts)
     const params = new URLSearchParams(window.location.search);
     const customServer = params.get('server');
+    const forceLocal = params.get('local') === 'true';
     
     // The local server URL - use custom if provided, otherwise default
     const localServerUrl = customServer || 'http://localhost:3000/api/pixel';
@@ -225,27 +409,79 @@ async function connectToLocalSentiumServer() {
     // Log attempt with full details for debugging
     console.log('Attempting to connect to local Sentium server:', localServerUrl);
     
+    // Show verbose debug info
+    const debugMode = params.get('debug') === 'true';
+    if (debugMode) {
+      console.log('Running in debug mode with extended logging');
+      
+      // Create a debug log element in the UI
+      const logElement = document.createElement('div');
+      logElement.id = 'debug-log';
+      logElement.style.cssText = 'position: fixed; bottom: 40px; left: 10px; max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.8); color: #0f0; padding: 10px; font-family: monospace; font-size: 12px; z-index: 999; width: 500px;';
+      document.body.appendChild(logElement);
+      
+      // Helper function to log to both console and UI
+      window.debugLog = function(message, type = 'info') {
+        const colors = {
+          info: '#0f0',
+          error: '#f00',
+          warning: '#ff0',
+          success: '#0ff'
+        };
+        console.log(`[DEBUG] ${message}`);
+        const log = document.getElementById('debug-log');
+        if (log) {
+          const line = document.createElement('div');
+          line.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+          line.style.color = colors[type] || colors.info;
+          line.style.borderBottom = '1px solid #333';
+          log.appendChild(line);
+          log.scrollTop = log.scrollHeight;
+        }
+      };
+      
+      window.debugLog('Debug mode enabled. Attempting local connection...');
+      window.debugLog(`Connection URL: ${localServerUrl}`);
+    }
+    
     // Try GET request first since it's more likely to work with CORS
     try {
+      window.debugLog && window.debugLog('Trying GET request to local server...');
+      
       const getResponse = await fetch(localServerUrl, {
         method: 'GET',
         mode: 'cors',
         headers: {
-          'Accept': 'application/json'
-        }
+          'Accept': 'application/json',
+          'Origin': window.location.origin
+        },
+        // Use no-cors mode as a fallback if CORS is an issue
+        // Note: no-cors will make the response opaque and unusable for JSON parsing
+        // but it will tell us if the server is reachable at all
       });
       
       if (getResponse.ok) {
-        const data = await getResponse.json();
-        if (data.success) {
-          console.log('Connected to local Sentium server via GET:', data);
-          window.localServerUrl = localServerUrl;
-          updatePixelStatus('Connected to local Sentium server via GET');
-          return true;
+        try {
+          const data = await getResponse.json();
+          if (data.success) {
+            console.log('Connected to local Sentium server via GET:', data);
+            window.localServerUrl = localServerUrl;
+            updatePixelStatus('Connected to local Sentium server via GET');
+            window.debugLog && window.debugLog(`Connected successfully: ${JSON.stringify(data)}`, 'success');
+            return true;
+          } else {
+            window.debugLog && window.debugLog('Server responded but without success flag', 'warning');
+          }
+        } catch (jsonError) {
+          window.debugLog && window.debugLog(`Error parsing JSON response: ${jsonError}`, 'error');
         }
+      } else {
+        window.debugLog && window.debugLog(`GET request failed with status: ${getResponse.status}`, 'error');
       }
     } catch (getError) {
       console.log('GET request failed, trying POST:', getError);
+      window.debugLog && window.debugLog(`GET request error: ${getError.message}`, 'error');
+      window.debugLog && window.debugLog('This is likely a CORS error. Try using a CORS browser extension.', 'warning');
     }
     
     // Fall back to POST if GET fails

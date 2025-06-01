@@ -1,6 +1,59 @@
 // Pixel Merger System
 // This system creates and merges pixels into 3D shapes
 
+/**
+ * Shows information about the logo pixel extraction in the info panel
+ * @param {string} message - The message to display
+ * @param {string} type - The type of message (info, error, warning)
+ */
+function showLogoPixelInfo(message, type = 'info') {
+  const infoPanel = document.getElementById('info-panel');
+  if (infoPanel) {
+    infoPanel.textContent = message;
+    
+    // Set color based on message type
+    switch (type) {
+      case 'error':
+        infoPanel.style.color = '#ff5555';
+        break;
+      case 'warning':
+        infoPanel.style.color = '#ffaa33';
+        break;
+      case 'success':
+        infoPanel.style.color = '#55ff55';
+        break;
+      default:
+        infoPanel.style.color = '#aaaaff';
+    }
+  } else {
+    // Create the info panel if it doesn't exist
+    const panel = document.createElement('div');
+    panel.id = 'info-panel';
+    panel.textContent = message;
+    panel.style.cssText = 'position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #aaaaff; padding: 8px; border-radius: 4px; font-size: 12px; z-index: 1000;';
+    
+    // Set color based on message type
+    switch (type) {
+      case 'error':
+        panel.style.color = '#ff5555';
+        break;
+      case 'warning':
+        panel.style.color = '#ffaa33';
+        break;
+      case 'success':
+        panel.style.color = '#55ff55';
+        break;
+      default:
+        panel.style.color = '#aaaaff';
+    }
+    
+    document.body.appendChild(panel);
+  }
+  
+  // Log to console as well
+  console.log(`[Logo Pixel Info] ${message}`);
+}
+
 // Logo pixel extraction system
 window.logoPixelData = {
   pixels: [],
