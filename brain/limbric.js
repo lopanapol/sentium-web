@@ -332,11 +332,10 @@ async function connectToSentiumServer() {
             <p>To connect GitHub Pages to your local Sentium server:</p>
             <ol>
               <li>Make sure your Sentium server is running locally: <code>node server.js</code></li>
-              <li>Install a CORS browser extension to bypass security restrictions</li>
               <li>Or use <code>?local=true&debug=true</code> in the URL to force local connection</li>
             </ol>
           `;
-          helpMsg.style.cssText = 'position: fixed; font-size: 15px; top: 55px; left: 10px; background: rgba(0, 0, 0, 0.51); color: #fff; padding: 15px; border-radius: 5px; z-index: 1000; max-width: 400px; display: none;';
+          helpMsg.style.cssText = 'position: fixed; font-size: 15px; top: 55px; left: 10px; background: rgba(0, 0, 0, 0.51); color: #fff; padding: 15px; border-radius: 5px; z-index: 1000; max-width: 280px; display: none;';
           
           document.body.appendChild(helpMsg);
           
