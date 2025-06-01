@@ -315,7 +315,7 @@ async function connectToSentiumServer() {
       const statusElement = document.getElementById('pixel-status');
       if (statusElement) {
         statusElement.textContent = 'Attempting to connect to local Sentium server...';
-        statusElement.style.color = '#ffcc00';
+        statusElement.style.color = 'white';
       }
       
       try {
