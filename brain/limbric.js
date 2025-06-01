@@ -161,9 +161,14 @@ async function connectToSentiumServer() {
       return true;
     }
     
+    // Check URL parameters for debug mode - allows testing with ?local=true
+    const params = new URLSearchParams(window.location.search);
+    const forceLocalMode = params.get('local') === 'true';
+    
     // If we're on GitHub Pages, try to connect to local Sentium server first
     const isGitHubPages = window.location.hostname.includes('github.io');
-    if (isGitHubPages) {
+    if (isGitHubPages || forceLocalMode) {
+      console.log('GitHub Pages detected or local mode forced - attempting local connection');
       try {
         const localConnected = await connectToLocalSentiumServer();
         if (localConnected) {
@@ -171,7 +176,7 @@ async function connectToSentiumServer() {
           return true;
         }
       } catch (localError) {
-        console.log('Could not connect to local server, falling back to remote API');
+        console.log('Could not connect to local server, falling back to remote API:', localError);
       }
     }
     
@@ -204,15 +209,46 @@ async function connectToSentiumServer() {
 }
 
 /**
- * Connects to a local Sentium server running on localhost:3000
+ * Improved connection to local Sentium server running on localhost:3000
  * This allows GitHub Pages hosted pixel to connect to a local Sentium server
  * @returns {Promise<boolean>} - Promise resolving to true if connected
  */
 async function connectToLocalSentiumServer() {
   try {
-    // The local server URL - this can be changed based on your config
-    const localServerUrl = 'http://localhost:3000/api/pixel';
+    // Allow custom server URL via URL parameter (for testing different ports/hosts)
+    const params = new URLSearchParams(window.location.search);
+    const customServer = params.get('server');
     
+    // The local server URL - use custom if provided, otherwise default
+    const localServerUrl = customServer || 'http://localhost:3000/api/pixel';
+    
+    // Log attempt with full details for debugging
+    console.log('Attempting to connect to local Sentium server:', localServerUrl);
+    
+    // Try GET request first since it's more likely to work with CORS
+    try {
+      const getResponse = await fetch(localServerUrl, {
+        method: 'GET',
+        mode: 'cors',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (getResponse.ok) {
+        const data = await getResponse.json();
+        if (data.success) {
+          console.log('Connected to local Sentium server via GET:', data);
+          window.localServerUrl = localServerUrl;
+          updatePixelStatus('Connected to local Sentium server via GET');
+          return true;
+        }
+      }
+    } catch (getError) {
+      console.log('GET request failed, trying POST:', getError);
+    }
+    
+    // Fall back to POST if GET fails
     const response = await fetch(localServerUrl, {
       method: 'POST',
       headers: {
@@ -1348,43 +1384,53 @@ function createRainbowBubbleEffect() {
 }
 
 /**
- * Connects to a local Sentium server running on localhost:3000
- * This allows GitHub Pages hosted pixel to connect to a local Sentium server
- * @returns {Promise<boolean>} - Promise resolving to true if connected
+ * Shows connection debug information for GitHub Pages users
  */
-async function connectToLocalSentiumServer() {
-  try {
-    // The local server URL - this can be changed based on your config
-    const localServerUrl = 'http://localhost:3000/api/pixel';
+function showConnectionDebugInfo() {
+  console.log('=== CONNECTION DEBUG INFO ===');
+  console.log('Hostname:', window.location.hostname);
+  console.log('GitHub Pages detection:', window.location.hostname.includes('github.io'));
+  console.log('Protocol:', window.location.protocol);
+  console.log('Parameters:', new URLSearchParams(window.location.search).toString());
+  console.log('===========================');
+  
+  // Add a debug notice to help users understand how to connect
+  if (window.location.hostname.includes('github.io')) {
+    const message = document.createElement('div');
+    message.className = 'debug-message';
+    message.innerHTML = `
+      <p>GitHub Pages detected! To connect to your local server:</p>
+      <ol>
+        <li>Make sure your local Sentium server is running: <code>cd ~/git-repos/sentium && ./run.fish</code></li>
+        <li>Use a <a href="https://chrome.google.com/webstore/detail/cors-unblock/lfhmikememgdcahcdlaciloancbhjino" target="_blank">CORS Browser Extension</a> or add <code>?local=true</code> to the URL</li>
+      </ol>
+      <button id="close-debug">Got it</button>
+    `;
+    message.style.cssText = `
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.8);
+      color: #39ffba;
+      padding: 15px;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 12px;
+      z-index: 10000;
+      max-width: 400px;
+    `;
+    document.body.appendChild(message);
     
-    const response = await fetch(localServerUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        action: 'connect'
-      }),
-      mode: 'cors' // Enable CORS for cross-origin requests
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      if (data.success) {
-        console.log(`Connected to local Sentium server v${data.version}`);
-        
-        // Store the local server URL for future API calls
-        window.localServerUrl = localServerUrl;
-        
-        // Update status
-        updatePixelStatus('Connected to local Sentium server');
-        
-        return true;
-      }
-    }
-    return false;
-  } catch (error) {
-    console.warn('Connection to local Sentium server failed:', error);
-    return false;
+    // Add close button functionality
+    setTimeout(() => {
+      document.getElementById('close-debug')?.addEventListener('click', () => {
+        message.style.display = 'none';
+      });
+    }, 100);
   }
 }
+
+// Call debug function when page loads
+document.addEventListener('DOMContentLoaded', showConnectionDebugInfo);
+
+// Existing code continues below
