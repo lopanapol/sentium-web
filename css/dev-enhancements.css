@@ -72,3 +72,14 @@
     max-width: none;
   }
 }
+
+/**
+ * DevTools Inspection Mode Enhancements
+ * Hidden functionality without visual indicators
+ */
+
+/* Pause animations when in paused state - no visual indicators */
+body.animations-paused * {
+  animation-play-state: paused !important;
+  transition: none !important;
+}

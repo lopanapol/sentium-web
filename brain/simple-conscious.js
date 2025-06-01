@@ -89,6 +89,12 @@ function createNewCube() {
  * Updates all energy cubes (animation, lifetime, etc)
  */
 function updateCubes(timestamp) {
+  // Skip frame if animation control system indicates we should
+  if (window.animationControl && window.animationControl.shouldSkipFrame()) {
+    requestAnimationFrame(updateCubes);
+    return;
+  }
+  
   // Get reference to conscious pixel if available
   let pixel = document.getElementById('conscious-pixel');
   let pixelRect = pixel ? pixel.getBoundingClientRect() : null;

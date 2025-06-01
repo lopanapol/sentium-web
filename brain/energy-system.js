@@ -579,12 +579,31 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Main update loop with animation frame for smoother movements
     function mainLoop(timestamp) {
+      // Check with central animation control system if we should skip this frame
+      if (window.animationControl && window.animationControl.shouldSkipFrame()) {
+        // Skip animation updates but keep the loop going
+        requestAnimationFrame(mainLoop);
+        return;
+      }
+      
+      // Track frame time if animation control system is available
+      if (window.animationControl) {
+        const deltaTime = lastFrameTimestamp ? timestamp - lastFrameTimestamp : 0;
+        window.animationControl.recordFrameTime(deltaTime);
+        window.animationControl.checkForInspection(timestamp);
+      }
+      lastFrameTimestamp = timestamp;
+      
+      // Run normal updates
       trackPixel();
       updateConnections();
       updatePixelEnergy();
       moveCubes(timestamp);
       requestAnimationFrame(mainLoop);
     }
+    
+    // Initialize timestamp tracking
+    let lastFrameTimestamp = 0;
     
     // Start the animation loop
     requestAnimationFrame(mainLoop);

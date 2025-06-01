@@ -533,6 +533,20 @@ async function connectToLocalSentiumServer() {
  * @param {number} timestamp - Animation timestamp
  */
 function updatePixel(pixel, state, timestamp) {
+  // Check with central animation control if we should skip this frame
+  if (window.animationControl && window.animationControl.shouldSkipFrame()) {
+    // Skip animation but continue the loop
+    requestAnimationFrame((newTimestamp) => updatePixel(pixel, state, newTimestamp));
+    return;
+  }
+  
+  // Track frame time if animation control is available
+  if (window.animationControl) {
+    const frameDelta = state.lastTimestamp ? timestamp - state.lastTimestamp : 0;
+    window.animationControl.recordFrameTime(frameDelta);
+    window.animationControl.checkForInspection(timestamp);
+  }
+  
   // Calculate delta time for smooth animation regardless of frame rate
   const deltaTime = state.lastTimestamp ? (timestamp - state.lastTimestamp) / 16 : 1;
   state.lastTimestamp = timestamp;

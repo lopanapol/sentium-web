@@ -529,6 +529,12 @@ function animatePixel(pixel) {
   
   // Animation function
   function move() {
+    // Skip frame if animation control system indicates we should
+    if (window.animationControl && window.animationControl.shouldSkipFrame()) {
+      requestAnimationFrame(move);
+      return;
+    }
+    
     // Stop animation if pixel is being merged or removed
     if (window.noePixels.isMerging || !pixel.parentNode) {
       return;
@@ -1043,6 +1049,12 @@ function animateShapeDrift(shapeData) {
   
   // Animation function
   function drift() {
+    // Skip frame if animation control system indicates we should
+    if (window.animationControl && window.animationControl.shouldSkipFrame()) {
+      requestAnimationFrame(drift);
+      return;
+    }
+    
     // Stop animation if shape is removed
     if (!container.parentNode || !document.getElementById(shapeData.id)) {
       return;

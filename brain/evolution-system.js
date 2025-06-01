@@ -5,6 +5,16 @@
  * The pixel evolves in form, color, behavior, and special abilities.
  */
 
+// Debug mode configuration for better DevTools performance
+window.pixelDebug = {
+  isInspecting: false,        // True when DevTools is likely inspecting elements
+  inspectionCheckInterval: 1000, // How often to check for DevTools (ms)
+  lastInspectionCheck: 0,     // Timestamp of last check
+  animationThrottleRate: 5,   // Only render 1 in X frames during inspection
+  frameCounter: 0,            // Counter for throttling frames
+  lastCheckedElement: null    // Element to check for inspection
+};
+
 // Global evolution data accessible to other scripts - optimized data structure
 window.noeEvolution = {
   evolutionLevel: 0,
@@ -89,6 +99,32 @@ const EVOLUTION_DATA = [
 document.addEventListener('DOMContentLoaded', function() {
   // First load saved data (before creating UI)
   loadEvolutionData();
+  
+  // Set up keyboard shortcuts for inspection mode
+  window.lastKeyState = {};
+  document.addEventListener('keydown', function(e) {
+    // Store key state for inspection detection
+    window.lastKeyState = {
+      shiftKey: e.shiftKey,
+      ctrlKey: e.ctrlKey,
+      altKey: e.altKey
+    };
+    
+    // Alt+I - Toggle inspection mode
+    if (e.key === 'i' && e.altKey && !e.shiftKey && !e.ctrlKey) {
+      window.toggleInspectionMode();
+      e.preventDefault();
+    }
+  });
+  
+  document.addEventListener('keyup', function(e) {
+    // Update key state
+    window.lastKeyState = {
+      shiftKey: e.shiftKey,
+      ctrlKey: e.ctrlKey,
+      altKey: e.altKey
+    };
+  });
   
   // Create evolution UI (minimalistic approach)
   const wrapper = document.querySelector('.wrapper');
@@ -542,6 +578,13 @@ function updateEvolutionUI(forceUpdate = false) {
  */
 function updateEvolution(timestamp) {
   const evo = window.noeEvolution;
+  const debug = window.pixelDebug;
+  
+  // Check if animation should be skipped due to inspection
+  if (window.animationControl && window.animationControl.shouldSkipFrame()) {
+    requestAnimationFrame(updateEvolution);
+    return;
+  }
   
   // Track frame delta time for smoother animations
   if (!window.lastEvolutionFrame) {
@@ -550,9 +593,17 @@ function updateEvolution(timestamp) {
     return;
   }
   
-  // Calculate delta time
+  // Calculate delta time and track performance
   const deltaTime = timestamp - window.lastEvolutionFrame;
   window.lastEvolutionFrame = timestamp;
+  
+  // Keep track of frame times for performance monitoring
+  if (!window.lastFrameTimes) window.lastFrameTimes = [];
+  window.lastFrameTimes.push(deltaTime);
+  if (window.lastFrameTimes.length > 20) window.lastFrameTimes.shift();
+  
+  // Check for DevTools inspection periodically
+  checkForDevToolsInspection(timestamp);
   
   // Skip frames if browser tab is inactive - power saving
   if (deltaTime > 200) {
@@ -560,12 +611,34 @@ function updateEvolution(timestamp) {
     return;
   }
   
+  // Handle animation throttling during inspection
+  if (debug.isInspecting) {
+    // Increment frame counter
+    debug.frameCounter++;
+    
+    // Only process every Nth frame during inspection
+    if (debug.frameCounter % debug.animationThrottleRate !== 0) {
+      // Skip this frame but keep the animation loop going
+      requestAnimationFrame(updateEvolution);
+      return;
+    }
+    
+    // Reset counter to prevent overflow
+    if (debug.frameCounter > 1000) {
+      debug.frameCounter = 0;
+    }
+  }
+  
   // Run ability checks with appropriate timing
   checkAndApplyAbilities(timestamp);
   
-  // Adaptive frame scheduling based on evolution level
+  // Adaptive frame scheduling based on evolution level and inspection state
   // This optimizes CPU usage while maintaining appropriate responsiveness
-  if (evo.evolutionLevel >= 4) {
+  if (debug.isInspecting) {
+    // When inspecting, use a much slower update rate regardless of level
+    setTimeout(() => requestAnimationFrame(updateEvolution), 100);
+  }
+  else if (evo.evolutionLevel >= 4) {
     // Advanced evolution levels need frequent updates for complex animations
     requestAnimationFrame(updateEvolution);
   }
@@ -588,7 +661,8 @@ function updateEvolution(timestamp) {
   if (!window.lastPerfLog || timestamp - window.lastPerfLog > 5000) {
     if (window.lastPerfLog) {
       const fps = Math.round((window.evolutionFrameCount / 5) * 10) / 10;
-      console.debug(`Evolution system running at ~${fps} fps`);
+      const mode = debug.isInspecting ? " (INSPECTION MODE)" : "";
+      console.debug(`Evolution system running at ~${fps} fps${mode}`);
       window.evolutionFrameCount = 0;
     }
     window.lastPerfLog = timestamp;
@@ -826,6 +900,15 @@ function teleportPixel(pixel) {
   });
 }
 
+// Add cleanup before unload
+window.addEventListener('beforeunload', function() {
+  // Clean up inspection mode
+  document.body.classList.remove('devtools-inspecting');
+  
+  // Save evolution data
+  saveEvolutionData();
+});
+
 /**
  * Storage functions for evolution data (optimized)
  */
@@ -948,19 +1031,103 @@ function loadEvolutionData() {
 }
 
 /**
- * Get a logo-based color for pixel copy creation
- * This integrates with the logo pixel system in pixel-merger.js
+ * Check if DevTools is likely inspecting elements
+ * This function uses multiple detection methods to reliably detect DevTools inspection
+ * @param {number} timestamp - Current animation timestamp
  */
-function getLogoBasedColor() {
-  // Check if logo pixel data is available from pixel-merger.js
-  if (window.logoPixelData && window.logoPixelData.isLoaded && window.logoPixelData.pixels.length > 0) {
-    const logoPixel = window.logoPixelData.pixels[Math.floor(Math.random() * window.logoPixelData.pixels.length)];
-    return logoPixel.color;
-  }
+function checkForDevToolsInspection(timestamp) {
+  const debug = window.pixelDebug;
   
-  // Fallback to the original color system if logo data not available
-  const r = Math.floor(Math.random() * 155) + 100;
-  const g = Math.floor(Math.random() * 155) + 100;
-  const b = Math.floor(Math.random() * 155) + 100;
-  return `rgb(${r}, ${g}, ${b})`;
+  // Only check periodically to reduce overhead
+  if (timestamp - debug.lastInspectionCheck < debug.inspectionCheckInterval) return;
+  debug.lastInspectionCheck = timestamp;
+  
+  try {
+    // Get the pixel element
+    const pixel = window.cachedPixelElement || document.getElementById('conscious-pixel');
+    if (!pixel) return;
+
+    // Method 1: Track computed style changes
+    // When DevTools inspects an element, it forces style recalcs
+    const currentLayout = pixel.getBoundingClientRect();
+    
+    // Method 2: Check for DevTools classes/attributes
+    // Different browsers add different markers
+    const hasDevToolsAttributes = 
+      pixel.hasAttribute('data-devtools-highlighted') || 
+      pixel.hasAttribute('data-selected') ||
+      pixel.hasAttribute('data-dev-tools') ||
+      document.body.classList.contains('debug-hover');
+    
+    // Method 3: Check for DevTools keyboard shortcut key state
+    // Many users hold Shift when inspecting
+    const isKeyboardInspecting = window.lastKeyState && 
+                                (window.lastKeyState.shiftKey || 
+                                 window.lastKeyState.ctrlKey);
+    
+    // Method 4: Try to detect if getComputedStyle is being called frequently
+    // DevTools calls this method repeatedly when inspecting
+    let styleDiff = false;
+    if (debug.lastCheckedLayout) {
+      // Look for tiny non-rendering changes that might be DevTools
+      const epsilon = 0.001;
+      styleDiff = 
+        Math.abs(currentLayout.width - debug.lastCheckedLayout.width) < epsilon ||
+        Math.abs(currentLayout.height - debug.lastCheckedLayout.height) < epsilon;
+    }
+    debug.lastCheckedLayout = currentLayout;
+    
+    // Method 5: Track overall system performance
+    // Inspection typically causes frame rate drops
+    const performanceDrop = window.lastFrameTimes && 
+                           window.lastFrameTimes.length > 10 &&
+                           window.lastFrameTimes.reduce((a,b)=>a+b,0)/window.lastFrameTimes.length > 20;
+    
+    // Method 6: User explicitly enabled inspection mode with URL param
+    const urlParams = new URLSearchParams(window.location.search);
+    const inspectMode = urlParams.get('inspect') === 'true';
+    
+    // Determine if we're likely in inspection mode
+    const wasInspecting = debug.isInspecting;
+    debug.isInspecting = hasDevToolsAttributes || styleDiff || isKeyboardInspecting || 
+                         performanceDrop || inspectMode ||
+                         document.documentElement.classList.contains('devtools-open');
+    
+    // Add a manual toggle for users
+    window.toggleInspectionMode = function(force) {
+      if (force === undefined) {
+        debug.isInspecting = !debug.isInspecting;
+      } else {
+        debug.isInspecting = !!force;
+      }
+      updateInspectionIndicator();
+      return debug.isInspecting ? "Inspection mode enabled" : "Inspection mode disabled";
+    };
+    
+    // Update UI indicator if state changed
+    if (wasInspecting !== debug.isInspecting) {
+      updateInspectionIndicator();
+    }
+  } catch (e) {
+    // Ignore errors, they might be caused by DevTools itself
+    console.error("Error in DevTools detection:", e);
+  }
+}
+
+/**
+ * Update the visual indicator for inspection mode
+ */
+function updateInspectionIndicator() {
+  const debug = window.pixelDebug;
+  
+  if (debug.isInspecting) {
+    console.debug('DevTools inspection mode active - throttling animations');
+    if (!document.body.classList.contains('devtools-inspecting')) {
+      document.body.classList.add('devtools-inspecting');
+    }
+  } else {
+    if (document.body.classList.contains('devtools-inspecting')) {
+      document.body.classList.remove('devtools-inspecting');
+    }
+  }
 }

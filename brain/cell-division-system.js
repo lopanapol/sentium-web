@@ -156,6 +156,12 @@ function createMainBodyContainer() {
 function trackMainPixelMovement() {
   // Function to update body position based on main pixel
   function updateBodyPosition() {
+    // Skip frame if animation control system indicates we should
+    if (window.animationControl && window.animationControl.shouldSkipFrame()) {
+      requestAnimationFrame(updateBodyPosition);
+      return;
+    }
+    
     const mainPixel = document.getElementById('conscious-pixel');
     const mainBody = window.noeCellDivision.mainBody;
     
@@ -176,7 +182,22 @@ function trackMainPixelMovement() {
 /**
  * Update the cell division system on each animation frame
  */
-function updateCellDivisionSystem() {
+function updateCellDivisionSystem(timestamp) {
+  // Check with central animation control if we should skip this frame
+  if (window.animationControl && window.animationControl.shouldSkipFrame()) {
+    // Skip animation but continue the loop
+    requestAnimationFrame(updateCellDivisionSystem);
+    return;
+  }
+  
+  // Track frame time if animation control is available
+  if (window.animationControl && window.lastCellDivisionFrameTime) {
+    const deltaTime = timestamp - window.lastCellDivisionFrameTime;
+    window.animationControl.recordFrameTime(deltaTime);
+    window.animationControl.checkForInspection(timestamp);
+  }
+  window.lastCellDivisionFrameTime = timestamp || performance.now();
+  
   const now = Date.now();
   const timeSinceLastDivision = now - window.noeCellDivision.lastDivisionTime;
   
@@ -671,6 +692,12 @@ function addCellDivisionStyles() {
  */
 function startRotationAnimation() {
   function updateRotation() {
+    // Skip frame if animation control system indicates we should
+    if (window.animationControl && window.animationControl.shouldSkipFrame()) {
+      requestAnimationFrame(updateRotation);
+      return;
+    }
+    
     if (!window.noeCellDivision.isRotating) {
       requestAnimationFrame(updateRotation);
       return;
