@@ -342,7 +342,7 @@ async function connectToSentiumServer() {
           // Add a button to show/hide the help message
           const helpBtn = document.createElement('button');
           helpBtn.textContent = 'Connection Help';
-          helpBtn.style.cssText = 'position: fixed; top: 10px; left: 10px; background: black; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; z-index: 1001;';
+          helpBtn.style.cssText = 'display: none; position: fixed; top: 10px; left: 10px; background: black; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; z-index: 1001;';
           helpBtn.onclick = function() {
             const helpEl = document.querySelector('.connection-help');
             if (helpEl.style.display === 'none') {
