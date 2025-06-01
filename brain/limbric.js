@@ -336,14 +336,14 @@ async function connectToSentiumServer() {
               <li>Or use <code>?local=true&debug=true</code> in the URL to force local connection</li>
             </ol>
           `;
-          helpMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: rgba(0,0,0,0.8); color: #fff; padding: 15px; border-radius: 5px; z-index: 1000; max-width: 400px; display: none;';
+          helpMsg.style.cssText = 'position: fixed; font-size: 15px; top: 55px; left: 10px; background: rgba(0,0,0,0.8); color: #fff; padding: 15px; border-radius: 5px; z-index: 1000; max-width: 400px; display: none;';
           
           document.body.appendChild(helpMsg);
           
           // Add a button to show/hide the help message
           const helpBtn = document.createElement('button');
           helpBtn.textContent = 'Connection Help';
-          helpBtn.style.cssText = 'position: fixed; top: 10px; right: 10px; background: #ff9900; color: #000; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; z-index: 1001;';
+          helpBtn.style.cssText = 'position: fixed; top: 10px; left: 10px; background: black; color: #000; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; z-index: 1001;';
           helpBtn.onclick = function() {
             const helpEl = document.querySelector('.connection-help');
             if (helpEl.style.display === 'none') {
