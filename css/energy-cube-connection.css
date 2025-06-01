@@ -1,0 +1,114 @@
+/* Energy Cube Connection Styles */
+
+/* Style for connected energy cube */
+.energy-cube.connected .cube-face {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Ripple effect for cube click */
+.cube-ripple {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  transform: scale(0);
+  animation: cubeRipple 0.8s ease-out;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+@keyframes cubeRipple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+/* Connected status styling */
+#pixel-status.connected {
+  color: #39ffba;
+  font-weight: bold;
+}
+
+/* Cursor feedback */
+.energy-cube {
+  cursor: pointer;
+  pointer-events: auto !important;
+  z-index: 9999 !important; /* Ensure it's above other elements */
+}
+
+/* Make cube container and faces clickable too */
+.cube-container,
+.cube-face {
+  pointer-events: auto !important;
+}
+
+/* Connection toggle styling - matches sound toggle */
+.connection-toggle-container {
+  display: flex;
+  align-items: center;
+  margin-top: 15px;
+}
+
+.connection-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+  margin-right: 10px;
+}
+
+.connection-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.connection-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.connection-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .connection-toggle-slider {
+  background-color: #39ffba;
+}
+
+input:focus + .connection-toggle-slider {
+  box-shadow: 0 0 1px #39ffba;
+}
+
+input:checked + .connection-toggle-slider:before {
+  transform: translateX(26px);
+}
+
+.connection-toggle-label {
+  font-weight: bold;
+  color: #333;
+}

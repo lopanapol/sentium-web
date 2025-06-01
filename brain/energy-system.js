@@ -11,7 +11,49 @@ window.noeEnergy = {
   nearestCube: null
 };
 
+// Global connection state
+window.localConnection = {
+  isConnected: false,
+  serverUrl: 'http://localhost:3000',
+  
+  // Attempt connection to local server
+  connect: async function() {
+    if (this.isConnected) return true;
+    
+    try {
+      // Send a test request to the server
+      const response = await fetch(this.serverUrl, {
+        method: 'GET',
+        mode: 'cors',
+        headers: {
+          'Accept': 'application/json',
+          'Origin': window.location.origin
+        }
+      });
+      
+      if (response.ok) {
+        console.log('Connected to local Sentium server');
+        this.isConnected = true;
+        return true;
+      } else {
+        console.error('Failed to connect to local Sentium server:', response.status);
+        return false;
+      }
+    } catch (error) {
+      console.error('Connection error:', error);
+      return false;
+    }
+  },
+  
+  // Disconnect from server
+  disconnect: function() {
+    this.isConnected = false;
+    console.log('Disconnected from local Sentium server');
+  }
+};
+
 document.addEventListener('DOMContentLoaded', function() {
+  console.log('Energy system initializing...');
   // References
   const pixel = document.getElementById('conscious-pixel');
   const body = document.body;
@@ -656,5 +698,58 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     observer.observe(document.body, { childList: true, subtree: true });
+  }
+  
+  // Shows a message about connection state
+  function showConnectionMessage(message) {
+    console.log('Showing connection message:', message);
+    
+    // Check if a message element already exists
+    let messageElement = document.querySelector('.connection-message');
+    
+    if (!messageElement) {
+      // Create a new message element if it doesn't exist
+      console.log('Creating new connection message element');
+      messageElement = document.createElement('div');
+      messageElement.className = 'connection-message';
+      document.body.appendChild(messageElement);
+      
+      // Add styles if needed
+      if (!document.getElementById('connection-message-styles')) {
+        console.log('Adding connection message styles');
+        const styles = document.createElement('style');
+        styles.id = 'connection-message-styles';
+        styles.textContent = `
+          .connection-message {
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #39ffba;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-family: var(--font-family, sans-serif);
+            font-size: 16px;
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+          }
+        `;
+        document.head.appendChild(styles);
+      }
+    }
+    
+    // Update message and show with !important to ensure visibility
+    messageElement.textContent = message;
+    messageElement.style.cssText = 'opacity: 1 !important; visibility: visible !important; z-index: 100000 !important;';
+    console.log('Message element updated and shown');
+    
+    // Hide after 2 seconds
+    setTimeout(() => {
+      messageElement.style.opacity = '0';
+      console.log('Message hidden after timeout');
+    }, 2000);
   }
 });
