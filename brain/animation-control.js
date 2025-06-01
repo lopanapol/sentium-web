@@ -14,11 +14,10 @@ window.animationControl = {
   isInspecting: false,        // True when element inspection is detected
   isTabActive: true,          // Whether the tab is currently visible/active
   isPaused: false,            // Manual pause flag
+  _lastDetectionSignals: {},  // Stores the last set of detection signals for debugging
   
   // Throttling configuration
-  frameThrottleRate: 5,       // Only process 1 in X frames when throttling
-  frameCounter: 0,            // Counter for throttling frames
-  inspectionInterval: 1000,   // How often to check for inspection (ms)
+  inspectionInterval: 250,    // How often to check for inspection (ms) - check more frequently for responsiveness
   lastInspectionCheck: 0,     // Last time inspection was checked
   
   // Performance tracking
@@ -100,49 +99,40 @@ window.animationControl = {
       const pixel = document.getElementById('conscious-pixel');
       if (!pixel) return;
       
-      // Multiple detection methods for different browsers
+      // SIMPLIFIED DETECTION: Focus only on definitive inspect element signals
       
-      // Method 1: Check for DevTools attributes
+      // Method 1: Check for DevTools inspector attributes (most reliable signal)
       const hasDevToolsAttributes = 
+        // These attributes are specifically added by browser DevTools when inspecting
         pixel.hasAttribute('data-devtools-highlighted') || 
-        pixel.hasAttribute('data-selected') ||
-        pixel.hasAttribute('data-dev-tools') ||
-        document.body.classList.contains('debug-hover');
+        pixel.hasAttribute('data-selected') || 
+        document.body.classList.contains('debug-hover') ||
+        !!document.querySelector('.devtools-tooltip');
       
-      // Method 2: Check for keyboard modifier keys
-      const isKeyboardInspecting = this.lastKeyState && 
-                               (this.lastKeyState.shiftKey || 
-                                this.lastKeyState.ctrlKey);
-      
-      // Method 3: Check for subtle layout changes
-      let styleDiff = false;
-      const currentLayout = pixel.getBoundingClientRect();
-      if (this.lastCheckedLayout) {
-        // Look for tiny non-rendering changes that might be DevTools
-        const epsilon = 0.001;
-        styleDiff = 
-          Math.abs(currentLayout.width - this.lastCheckedLayout.width) < epsilon ||
-          Math.abs(currentLayout.height - this.lastCheckedLayout.height) < epsilon;
-      }
-      this.lastCheckedLayout = currentLayout;
-      
-      // Method 4: Performance-based detection
-      const performanceDrop = this.lastFrameTimes.length > 10 &&
-                            this.lastFrameTimes.reduce((a,b)=>a+b,0)/this.lastFrameTimes.length > 20;
-      
-      // Method 5: URL parameter
+      // Method 2: URL parameter (for testing)
       const urlParams = new URLSearchParams(window.location.search);
       const inspectMode = urlParams.get('inspect') === 'true';
       
-      // Determine inspection state
+      // Store signals for debugging
+      this._lastDetectionSignals = {
+        hasDevToolsAttributes,
+        inspectMode
+      };
+      
+      // SIMPLIFIED DETECTION: We ONLY want to detect actual DevTools inspection
+      const detectedInspection = hasDevToolsAttributes || inspectMode;
+      
+      // Simplified inspection state management - direct response to DevTools signals
       const wasInspecting = this.isInspecting;
-      this.isInspecting = 
-        hasDevToolsAttributes || 
-        styleDiff || 
-        isKeyboardInspecting || 
-        performanceDrop || 
-        inspectMode ||
-        document.documentElement.classList.contains('devtools-open');
+      
+      // Set inspection state directly based on definitive DevTools signals
+      // This ensures we ONLY pause when the inspector is actively being used
+      this.isInspecting = detectedInspection;
+      
+      // Update UI if state changed
+      if (wasInspecting !== this.isInspecting) {
+        this.updateInspectionIndicator();
+      }
       
       // Update UI if state changed
       if (wasInspecting !== this.isInspecting) {
@@ -158,7 +148,17 @@ window.animationControl = {
   updateInspectionIndicator: function() {
     // No visual indicators as requested - just log to console
     if (this.isInspecting) {
-      console.debug('DevTools inspection detected - stopping animations');
+      console.debug('Element inspection active - pausing animations');
+      
+      // Log detection signals in debug mode (hidden in production)
+      if (window.pixelDebug) {
+        console.debug('DevTools inspection detected via:', {
+          hasDevToolsAttributes: this._lastDetectionSignals?.hasDevToolsAttributes,
+          inspectMode: this._lastDetectionSignals?.inspectMode
+        });
+      }
+    } else {
+      console.debug('Element inspection ended - resuming animations');
     }
   },
   
@@ -194,14 +194,14 @@ document.addEventListener('visibilitychange', () => {
 
 // Set up keyboard shortcuts
 document.addEventListener('keydown', (e) => {
-  // Track key state
+  // Track minimal key state
   window.animationControl.lastKeyState = {
     shiftKey: e.shiftKey,
     ctrlKey: e.ctrlKey,
     altKey: e.altKey
   };
   
-  // Alt+I - Toggle inspection mode
+  // Alt+I - Toggle inspection mode (manual override)
   if (e.key === 'i' && e.altKey && !e.shiftKey && !e.ctrlKey) {
     window.animationControl.toggleInspectionMode();
     e.preventDefault();
@@ -215,7 +215,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 document.addEventListener('keyup', (e) => {
-  // Update key state
+  // Update minimal key state
   window.animationControl.lastKeyState = {
     shiftKey: e.shiftKey,
     ctrlKey: e.ctrlKey,
