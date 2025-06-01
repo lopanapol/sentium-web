@@ -504,9 +504,9 @@ a {
   bottom: 10px;
   left: 10px;
   font-size: 15px;
-  color: black;
+  color: white;
   font-family: var(--font-family);
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: black;
   padding: 5px 10px;
   border-radius: 4px;
   z-index: 1000;
