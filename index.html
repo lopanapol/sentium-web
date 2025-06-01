@@ -62,21 +62,6 @@
         localStorage.setItem('connectionPanelMinimized', connectionContainer.classList.contains('minimized'));
       });
       
-      // Check if we're running on GitHub Pages or sentium.dev
-      const isGitHubPages = window.location.hostname.includes('github.io');
-      const isSentiumDev = window.location.hostname === 'sentium.dev';
-      
-      // Add GitHub Pages or sentium.dev warning if detected
-      if (isGitHubPages || isSentiumDev) {
-        const warning = document.createElement('div');
-        warning.style.cssText = 'background: rgba(255,204,0,0.2); border: 1px solid #fc0; color: #333; padding: 10px; margin-top: 10px; font-size: 13px; border-radius: 4px;';
-        warning.innerHTML = `<strong>${isGitHubPages ? 'GitHub Pages' : 'Sentium.dev'} detected:</strong> To connect to your local Sentium server, make sure:<br>` + 
-          '1. Your local server is running with <code>node server.js</code><br>' +
-          '2. Local server is configured with correct CORS settings<br>' +
-          '3. You\'re using Chrome 130+ or Firefox for best compatibility';
-        document.querySelector('.wrapper').insertBefore(warning, document.querySelector('.content'));
-      }
-      
       // Set up the connection test function
       function testConnection(serverUrl) {
         return new Promise(async (resolve, reject) => {
