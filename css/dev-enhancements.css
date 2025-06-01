@@ -37,15 +37,12 @@
   position: fixed;
   bottom: 60px;
   left: 10px;
-  background: rgba(0,0,0,0.7);
+  background: rgb(255 255 255 / 62%);
   padding: 15px;
   border-radius: 8px;
-  border: 1px solid var(--primary-accent);
-  color: white;
-  font-size: 15px;
   z-index: 100;
-  max-width: 300px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  max-width: 202px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0,
 }
 
 .info-panel h3 {

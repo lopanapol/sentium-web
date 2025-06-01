@@ -109,6 +109,10 @@
   color: white;
 }
 
+#test-connection {
+    width: 240px;
+}
+
 .controls-row {
   display: flex;
   align-items: center;
