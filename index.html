@@ -130,7 +130,7 @@
             }
           } catch (error) {
             // CORS error or network failure
-            infoPanel.textContent = `Connection failed: ${error.message}. CORS issues?`;
+            infoPanel.textContent = `Connection failed: ${error.message}.`;
             infoPanel.style.color = '#ff0000';
             statusIndicator.style.backgroundColor = '#ff0000';
             connectionMessage.textContent = 'Connection failed (CORS issue)';
