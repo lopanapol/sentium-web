@@ -1,0 +1,174 @@
+/* 
+ * Connection controls - styles for the local connection interface
+ */
+
+.connection-container {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--primary-accent);
+  color: white;
+  font-size: 0.85rem;
+  z-index: 100;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  max-width: 350px;
+  transition: all 0.3s ease;
+}
+
+.connection-container.minimized {
+  width: auto;
+  height: auto;
+  overflow: hidden;
+}
+
+.connection-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.connection-title {
+  font-weight: bold;
+  color: #fff;
+  margin: 0;
+  font-family: var(--font-family-header);
+}
+
+.connection-toggle {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.connection-toggle:hover {
+  color: var(--primary-accent);
+}
+
+.connection-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.connection-button {
+  background: var(--primary-accent);
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+}
+
+.connection-button:hover {
+  background: #9670ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.connection-button:active {
+  transform: translateY(1px);
+}
+
+.connection-select {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 7px;
+  border-radius: 4px;
+  font-family: var(--font-family);
+  font-size: 0.85rem;
+  width: 100%;
+  cursor: pointer;
+}
+
+.connection-select:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.connection-select option {
+  background: #333;
+  color: white;
+}
+
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-panel {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.4;
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
+}
+
+.status-indicator.disconnected {
+  background-color: #ff3333;
+}
+
+.status-indicator.connecting {
+  background-color: #ffaa33; 
+  animation: pulse 1.5s infinite;
+}
+
+.status-indicator.connected {
+  background-color: #33cc33;
+}
+
+.connection-message {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .connection-container {
+    top: 5px;
+    right: 5px;
+    padding: 8px;
+    max-width: calc(100% - 10px);
+  }
+}

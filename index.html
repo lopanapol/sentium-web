@@ -28,18 +28,52 @@
       const infoPanel = document.getElementById('info-panel');
       const statusIndicator = document.getElementById('status-indicator');
       const connectionMessage = document.getElementById('connection-message');
+      const connectionToggle = document.getElementById('connection-toggle');
+      const connectionContainer = document.getElementById('connection-container');
+      const connectionContent = document.getElementById('connection-content');
       
-      // Check if we're running on GitHub Pages
+      // Set up connection panel toggle functionality
+      connectionToggle.addEventListener('click', function() {
+        if (connectionContainer.classList.contains('minimized')) {
+          // Expand the panel
+          connectionContainer.classList.remove('minimized');
+          connectionContent.style.display = 'block';
+          connectionToggle.textContent = '−';
+          connectionToggle.title = 'Minimize';
+        } else {
+          // Collapse the panel
+          connectionContainer.classList.add('minimized');
+          connectionContent.style.display = 'none';
+          connectionToggle.textContent = '+';
+          connectionToggle.title = 'Maximize';
+        }
+      });
+      
+      // Load panel state from local storage
+      const isPanelMinimized = localStorage.getItem('connectionPanelMinimized') === 'true';
+      if (isPanelMinimized) {
+        connectionContainer.classList.add('minimized');
+        connectionContent.style.display = 'none';
+        connectionToggle.textContent = '+';
+      }
+      
+      // Save panel state to local storage when changed
+      connectionToggle.addEventListener('click', function() {
+        localStorage.setItem('connectionPanelMinimized', connectionContainer.classList.contains('minimized'));
+      });
+      
+      // Check if we're running on GitHub Pages or sentium.dev
       const isGitHubPages = window.location.hostname.includes('github.io');
+      const isSentiumDev = window.location.hostname === 'sentium.dev';
       
-      // Add GitHub Pages warning if detected
-      if (isGitHubPages) {
+      // Add GitHub Pages or sentium.dev warning if detected
+      if (isGitHubPages || isSentiumDev) {
         const warning = document.createElement('div');
         warning.style.cssText = 'background: rgba(255,204,0,0.2); border: 1px solid #fc0; color: #333; padding: 10px; margin-top: 10px; font-size: 13px; border-radius: 4px;';
-        warning.innerHTML = '<strong>GitHub Pages detected:</strong> You\'re accessing this page from GitHub Pages. To connect to your local Sentium server, make sure:<br>' + 
+        warning.innerHTML = `<strong>${isGitHubPages ? 'GitHub Pages' : 'Sentium.dev'} detected:</strong> To connect to your local Sentium server, make sure:<br>` + 
           '1. Your local server is running with <code>node server.js</code><br>' +
-          '2. You\'ve installed a CORS browser extension or enabled cross-origin requests<br>' +
-          '3. Use Chrome or Firefox for best results with local connections';
+          '2. Local server is configured with correct CORS settings<br>' +
+          '3. You\'re using Chrome 130+ or Firefox for best compatibility';
         document.querySelector('.wrapper').insertBefore(warning, document.querySelector('.content'));
       }
       
@@ -49,8 +83,7 @@
           try {
             // Update UI
             infoPanel.textContent = `Testing connection to ${serverUrl}...`;
-            infoPanel.style.color = '#ffcc00';
-            statusIndicator.style.backgroundColor = '#ffcc00';
+            statusIndicator.className = 'status-indicator connecting';
             connectionMessage.textContent = 'Connection in progress...';
             
             // Test with multiple approaches due to CORS
@@ -190,24 +223,35 @@
       }
     });
   </script>
+  <link rel="stylesheet" href="css/connection-controls.css">
   </head>
   <body>
     <div class="wrapper">
-      <div id="pixel-status">Status: Disconnected</div>
-      <div id="connection-controls">
-        <button id="test-connection" style="background: #5e42a6; color: white; padding: 5px 10px; border: none; border-radius: 3px; cursor: pointer; margin-right: 5px;">Test Local Connection</button>
-        <select id="server-select" style="padding: 4px; border-radius: 3px;">
-          <option value="http://localhost:3000/api/pixel">localhost:3000</option>
-          <option value="http://localhost:3001/api/pixel">localhost:3001</option>
-          <option value="http://127.0.0.1:3000/api/pixel">127.0.0.1:3000</option>
-          <option value="http://localhost:3000/api/test-connection">Test Endpoint (3000)</option>
-        </select>
-        <div id="info-panel" style="margin-top: 5px; font-size: 12px; color: #888;"></div>
-        <div id="connection-status" style="margin-top: 8px; display: flex; gap: 10px; align-items: center;">
-          <div style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: #ff3333;" id="status-indicator"></div>
-          <span id="connection-message">No connection attempt yet</span>
+      <div class="connection-container" id="connection-container">
+        <div class="connection-header">
+          <h4 class="connection-title">Local Connection</h4>
+          <button class="connection-toggle" id="connection-toggle" title="Minimize/Maximize">−</button>
+        </div>
+        <div class="connection-content" id="connection-content">
+          <div class="connection-controls">
+            <div class="controls-row">
+              <button id="test-connection" class="connection-button">Test Connection</button>
+              <select id="server-select" class="connection-select">
+                <option value="http://localhost:3000/api/pixel">localhost:3000</option>
+                <option value="http://localhost:3001/api/pixel">localhost:3001</option>
+                <option value="http://127.0.0.1:3000/api/pixel">127.0.0.1:3000</option>
+                <option value="http://localhost:3000/api/test-connection">Test Endpoint (3000)</option>
+              </select>
+            </div>
+            <div id="info-panel" class="info-panel"></div>
+            <div id="connection-status" class="connection-status">
+              <div id="status-indicator" class="status-indicator disconnected"></div>
+              <span id="connection-message" class="connection-message">No connection attempt yet</span>
+            </div>
+          </div>
         </div>
       </div>
+      <div id="pixel-status">Status: Disconnected</div>
       <div class="content" role="main">
         <div id="sentium-logo" 
           class="illustration bubble-logo" 
