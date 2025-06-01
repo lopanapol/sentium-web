@@ -4,6 +4,8 @@
 .energy-cube.connected .cube-face {
   background-color: rgba(255, 255, 255, 0.9) !important;
   box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.7) !important;
+  opacity: 1 !important; /* Ensure full opacity when connected */
+  transition: background-color 0.5s, box-shadow 0.5s, opacity 0.5s;
 }
 
 /* Ripple effect for cube click */
