@@ -302,12 +302,14 @@ async function connectToSentiumServer() {
     const skipLocalAttempt = params.get('skipLocal') === 'true';
     const customServerUrl = params.get('server');
     
-    // If we're on GitHub Pages, try to connect to local Sentium server first
+    // If we're on GitHub Pages or sentium.dev, try to connect to local Sentium server first
     const isGitHubPages = window.location.hostname.includes('github.io') || 
                          window.location.hostname.includes('lopanapol.github.io');
+    const isSentiumDev = window.location.hostname === 'sentium.dev' || 
+                         window.location.hostname.includes('sentium');
     
-    if (isGitHubPages || forceLocalMode) {
-      console.log('GitHub Pages detected or local mode forced - attempting local connection');
+    if (isGitHubPages || isSentiumDev || forceLocalMode) {
+      console.log(`${isGitHubPages ? 'GitHub Pages' : (isSentiumDev ? 'Sentium.dev' : 'Local mode')} detected - attempting local connection`);
       
       // Create a visual indicator for users when trying to connect to local server
       const statusElement = document.getElementById('pixel-status');
@@ -402,9 +404,17 @@ async function connectToLocalSentiumServer() {
     const params = new URLSearchParams(window.location.search);
     const customServer = params.get('server');
     const forceLocal = params.get('local') === 'true';
+    const useJsonP = params.get('jsonp') === 'true';
     
     // The local server URL - use custom if provided, otherwise default
-    const localServerUrl = customServer || 'http://localhost:3000/api/pixel';
+    let localServerUrl = customServer || 'http://localhost:3000/api/pixel';
+    
+    // Use the test-connection endpoint instead of /api/pixel when on sentium.dev
+    // This endpoint has more permissive CORS settings
+    if (window.location.hostname === 'sentium.dev' && !customServer) {
+      localServerUrl = 'http://localhost:3000/api/test-connection';
+      console.log('Using specialized test connection endpoint for sentium.dev');
+    }
     
     // Log attempt with full details for debugging
     console.log('Attempting to connect to local Sentium server:', localServerUrl);
@@ -1288,13 +1298,52 @@ async function savePixelStateToRedis(state) {
       timestamp: new Date().toISOString()
     };
     
-    // Try the local server first if we're hosted on GitHub Pages
-    const isGitHubPages = window.location.hostname.includes('github.io');
-    
-    if (isGitHubPages) {
+    // Check if we have a local server URL (set when successfully connected to local server)
+    if (window.localServerUrl) {
       try {
-        // Use the local server endpoint
-        const localServerUrl = 'http://localhost:3000/api/pixel';
+        console.log('Using stored local server URL for state saving:', window.localServerUrl);
+        const localResponse = await fetch(window.localServerUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            action: 'saveState',
+            pixelState: stateToSave
+          })
+        });
+        
+        if (localResponse.ok) {
+          console.log('Pixel state saved to local Sentium server');
+          return;
+        } else {
+          console.warn('Local server returned error status:', localResponse.status);
+        }
+      } catch (localError) {
+        console.warn('Failed to save state to local server:', localError);
+      }
+      
+      // If we tried local and failed, skip the fallback when coming from sentium.dev
+      // This prevents the constant 405 errors we're seeing
+      if (window.location.hostname === 'sentium.dev') {
+        console.log('Skipping remote API fallback when on sentium.dev');
+        return;
+      }
+    }
+    
+    // Try the local server first if we're hosted on GitHub Pages but don't have a stored URL
+    const isGitHubPages = window.location.hostname.includes('github.io');
+    const isSentiumDev = window.location.hostname === 'sentium.dev';
+    const params = new URLSearchParams(window.location.search);
+    const forceLocalMode = params.get('local') === 'true';
+    
+    if (isGitHubPages || isSentiumDev || forceLocalMode) {
+      try {
+        // Use the local server endpoint or custom server from URL parameters
+        const customServer = params.get('server');
+        const localServerUrl = customServer || 'http://localhost:3000/api/pixel';
+        
+        console.log('Trying to save state to local server:', localServerUrl);
         const localResponse = await fetch(localServerUrl, {
           method: 'POST',
           headers: {
@@ -1313,25 +1362,33 @@ async function savePixelStateToRedis(state) {
       } catch (localError) {
         console.warn('Failed to connect to local server, falling back to remote API:', localError);
       }
+      
+      // If we're on sentium.dev, don't try the fallback
+      if (isSentiumDev) {
+        console.log('Skipping remote API fallback when on sentium.dev');
+        return;
+      }
     }
     
-    // Fall back to the standard endpoint
-    const response = await fetch('/api/sentium', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        action: 'updateState',
-        state: stateToSave
-      })
-    });
-    
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+    // Only fall back to the standard endpoint if not on sentium.dev
+    if (window.location.hostname !== 'sentium.dev') {
+      const response = await fetch('/api/sentium', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          action: 'updateState',
+          state: stateToSave
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      
+      console.log('Pixel state saved to Redis');
     }
-    
-    console.log('Pixel state saved to Redis');
   } catch (error) {
     console.warn('Failed to save pixel state:', error);
   }
