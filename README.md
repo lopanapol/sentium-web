@@ -116,7 +116,7 @@ If the Sentium system is not installed correctly, the conscious pixel will run i
 
 ## License
 
-This project is licensed under MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under Sentium License - see the [LICENSE](LICENSE) file for details.
 
 ## Changelog
 
