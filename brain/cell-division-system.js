@@ -46,9 +46,6 @@ function initializeCellDivisionSystem() {
   // Start the cell division loop
   window.noeCellDivision.lastDivisionTime = Date.now();
   requestAnimationFrame(updateCellDivisionSystem);
-  
-  // Add cell division info to the UI
-  addCellDivisionInfo();
 }
 
 /**
@@ -234,19 +231,6 @@ function updateCellDivisionSystem(timestamp) {
   
   // Continue the animation loop
   requestAnimationFrame(updateCellDivisionSystem);
-}
-
-/**
- * Add a countdown timer to show when the next division will occur
- */
-function addCellDivisionInfo() {
-  const infoElement = document.createElement('div');
-  infoElement.id = 'cell-division-info';
-  infoElement.innerHTML = `
-    <div class="cell-division-count">Cells: <span id="cell-count">1</span>/${window.noeCellDivision.maxCells}</div>
-    <div class="cell-division-timer">Next division: <span id="division-countdown">10</span>s</div>
-  `;
-  document.querySelector('.wrapper').appendChild(infoElement);
 }
 
 /**
