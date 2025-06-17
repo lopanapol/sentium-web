@@ -601,7 +601,7 @@ function updatePixel(pixel, state, timestamp) {
         
         // Frantic color changes to indicate distress
         if (Math.random() < 0.1) {
-          state.targetColor = Math.random() < 0.5 ? '#ff0000' : '#ff9900'; // Red or orange
+          state.targetColor = 'rgb(255, 255, 255)'; // Stay white even when stressed
           state.colorTransitionProgress = 0;
           state.colorTransitionDuration = 300;
         }
@@ -622,7 +622,7 @@ function updatePixel(pixel, state, timestamp) {
             state.velocityY = Math.sin(panicAngle) * panicForce;
             
             // Very rapid color pulsing - urgent distress signal
-            state.targetColor = Math.random() < 0.5 ? '#ff0000' : '#ffff00'; 
+            state.targetColor = 'rgb(255, 255, 255)'; // Stay white even in critical state
             state.colorTransitionProgress = 0;
             state.colorTransitionDuration = 100; // Very fast transitions
             
@@ -644,7 +644,7 @@ function updatePixel(pixel, state, timestamp) {
         
         // Occasional color changes indicating concern
         if (Math.random() < 0.05) {
-          state.targetColor = '#ff9900'; // Orange - warning color
+          state.targetColor = 'rgb(255, 255, 255)'; // Stay white
           state.colorTransitionProgress = 0;
           state.colorTransitionDuration = 400;
         }
@@ -671,7 +671,7 @@ function updatePixel(pixel, state, timestamp) {
         
         // Visual indicator that pixel is seeking energy
         if (!state.isExcited && Math.random() < 0.03) {
-          state.targetColor = '#39ffba'; // Energy cube color with slight variation
+          state.targetColor = 'rgb(255, 255, 255)'; // Stay white
           state.colorTransitionProgress = 0;
           state.colorTransitionDuration = 600;
         }
@@ -683,7 +683,7 @@ function updatePixel(pixel, state, timestamp) {
         
         // Visual indicator that pixel is seeking energy
         if (!state.isExcited) {
-          state.targetColor = '#39ffba'; // Energy cube color
+          state.targetColor = 'rgb(255, 255, 255)'; // Stay white
           state.colorTransitionProgress = 0;
           state.colorTransitionDuration = 500;
         }
@@ -798,10 +798,7 @@ function updatePixel(pixel, state, timestamp) {
   
   // Start a new color transition after a random interval (3-8 seconds)
   if (state.targetColor === null && (timeSinceLastColorChange > (state.connected ? 3000 : 5000) || Math.random() < 0.001)) {
-    state.targetColor = getLogoColor();
-    while (state.targetColor === state.color) {
-      state.targetColor = getLogoColor(); // Make sure we get a different color
-    }
+    state.targetColor = 'rgb(255, 255, 255)'; // Always stay white
     state.colorTransitionProgress = 0;
     state.colorTransitionDuration = 1000 + Math.random() * 2000; // Transition over 1-3 seconds
   }
@@ -1070,7 +1067,7 @@ function checkForRevival(pixel, state) {
       state.size = 4;
       
       // Change color to indicate revival
-      state.targetColor = '#39ffba'; // Energy color
+      state.targetColor = 'rgb(255, 255, 255)'; // Stay white
       state.colorTransitionProgress = 0;
       state.colorTransitionDuration = 800;
       
@@ -1455,11 +1452,7 @@ function setupMouseInteractions(state) {
         state.excitementLevel = Math.min(1.0, state.excitementLevel + 0.5);
         
         // Force a color change to show reaction
-        if (Math.random() < 0.7) {
-          state.targetColor = '#FFFFFF'; // Flash white
-        } else {
-          state.targetColor = '#F0FF00'; // Flash yellow
-        }
+        state.targetColor = '#FFFFFF'; // Always flash white
         state.colorTransitionProgress = 0;
         state.colorTransitionDuration = 300;
       }
