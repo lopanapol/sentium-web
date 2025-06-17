@@ -24,6 +24,7 @@
     <script src="brain/pixel-merger.js" defer></script>
     <script src="brain/cell-division-system.js" defer></script>
     <script src="brain/logo-animation-control.js" defer></script>
+    <script src="network/link-controller.js" defer></script>
   <!-- Connection functionality is now handled by the energy cube click -->
   
   </head>
@@ -60,6 +61,15 @@
               <span class="connection-toggle-slider"></span>
             </label>
             <span class="connection-toggle-label">Connect</span>
+          </div>
+          
+          <!-- Hidden Network Link - Only shows when servers are online -->
+          <div class="network-link-container" id="network-link-container" style="display: none;">
+            <a href="network/dashboard.html" class="network-link">
+              <span class="network-icon">🌐</span>
+              <span class="network-text">Network Dashboard</span>
+              <span class="online-indicator" id="online-indicator"></span>
+            </a>
           </div>
         </div>
       </div>
@@ -121,15 +131,24 @@
                       pixelStatus.textContent = 'Status: Connected';
                       pixelStatus.classList.add('connected');
                     }
+                    
+                    // Show network link
+                    document.getElementById('network-link-container').style.display = 'block';
                   } else {
                     // Connection failed
                     this.checked = false;
                     showMessage('Sleeping Field', '#ff3939');
+                    
+                    // Hide network link
+                    document.getElementById('network-link-container').style.display = 'none';
                   }
                 } catch (error) {
                   console.error('Connection error:', error);
                   this.checked = false;
                   showMessage('Connection error', '#ff3939');
+                  
+                  // Hide network link
+                  document.getElementById('network-link-container').style.display = 'none';
                 }
               }
             } else {
@@ -150,6 +169,9 @@
                 pixelStatus.textContent = 'Status: Disconnected';
                 pixelStatus.classList.remove('connected');
               }
+              
+              // Hide network link
+              document.getElementById('network-link-container').style.display = 'none';
             }
           });
         }
