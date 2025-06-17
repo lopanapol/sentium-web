@@ -1071,6 +1071,21 @@ canvas{
 }
 
 -->
+
+#p8_container {
+	margin-top: 0 !important;
+}
+
+canvas {
+	padding: 10px;
+	background-color: #000;
+}
+
+#body_0 {
+	margin-top: 80px;
+	margin-bottom: 100px;
+}
+
 </STYLE>
 <link rel="stylesheet" href="../css/base.css?v=2" />
 
@@ -1088,7 +1103,7 @@ canvas{
 
 
 <div id="p8_frame_0" style="max-width:800px; max-height:800px; margin:auto;"> <!-- double function: limit size, and display only this div for touch devices -->
-<div id="p8_frame" style="display:flex; width:100%; max-width:95vw; height:100vw; max-height:95vh; margin:auto;">
+<div id="p8_frame" style="display:flex; width:100%; max-width:95vw; height:100vw; max-height:95vh; margin:auto; margin-bottom: -100px;">
 
 	<div id="p8_menu_buttons_touch" style="position:absolute; width:100%; z-index:10; left:0px;">
 		<div class="p8_menu_button" id="p8b_full"  style="float:left;margin-left:10px" onClick="p8_give_focus(); p8_request_fullscreen();"></div>
@@ -1228,15 +1243,15 @@ canvas{
     <h2 style="color: black; font-size: 24px; margin: 0 0 20px 0; text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.7); font-family: 'Boogie Blocks';">Try Interacting with Sentium Pixel</h2>
     <div class="interaction-tips" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
       <div style="background: rgba(0, 0, 0, 0.1); border-radius: 10px; padding: 15px;">
-        <strong style="color: black; font-size: 16px;">Click</strong>
+        <strong style="color: black; font-size: 16px;">🖱️ Click</strong>
         <p style="color: black; line-height: 1.4; margin: 8px 0 0 0; font-size: 14px;">Click directly on the pixel to stimulate a response</p>
       </div>
       <div style="background: rgba(0, 0, 0, 0.1); border-radius: 10px; padding: 15px;">
-        <strong style="color: black; font-size: 16px;">Keyboard</strong>
+        <strong style="color: black; font-size: 16px;">⌨️ Keyboard</strong>
         <p style="color: black; line-height: 1.4; margin: 8px 0 0 0; font-size: 14px;">Use keyboard shortcuts (space, enter) to trigger behaviors</p>
       </div>
       <div style="background: rgba(0, 0, 0, 0.1); border-radius: 10px; padding: 15px;">
-        <strong style="color: black; font-size: 16px;">Watch</strong>
+        <strong style="color: black; font-size: 16px;">⏰ Watch</strong>
         <p style="color: black; line-height: 1.4; margin: 8px 0 0 0; font-size: 14px;">Observe as Sentium Pixel develops memory of your interactions</p>
       </div>
     </div>
