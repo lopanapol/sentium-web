@@ -382,6 +382,11 @@ input:checked + .connection-toggle-slider:before {
     margin-bottom: 100px;
   }
   
+  .game-iframe {
+    width: calc(100vw - 20px) !important;
+    height: calc(100vw - 20px) !important;
+  }
+  
   .game-features {
     grid-template-columns: 1fr;
   }
@@ -420,6 +425,11 @@ input:checked + .connection-toggle-slider:before {
     height: 280px;
   }
   
+  .game-iframe {
+    width: 280px !important;
+    height: 280px !important;
+  }
+  
   .game-info {
     padding: 15px;
     margin: 0 5px;
@@ -445,6 +455,11 @@ input:checked + .connection-toggle-slider:before {
     max-width: 100vw;
     max-height: 100vw;
   }
+  
+  .game-iframe {
+    width: 100vw !important;
+    height: 100vw !important;
+  }
 }
 
 /* Additional mobile landscape optimization */
@@ -461,5 +476,10 @@ input:checked + .connection-toggle-slider:before {
   .game-wrapper.pico8-size {
     max-height: 80vh;
     max-width: 80vh;
+  }
+  
+  .game-iframe {
+    width: 80vh !important;
+    height: 80vh !important;
   }
 }
