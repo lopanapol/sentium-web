@@ -328,11 +328,13 @@ async function connectToSentiumServer() {
           const helpMsg = document.createElement('div');
           helpMsg.className = 'connection-help';
           helpMsg.innerHTML = `
-            <h3>Connection to local Sentium server failed</h3>
-            <p>To connect GitHub Pages to your local Sentium server:</p>
+            <h3>Running in standalone mode</h3>
+            <p>No local Sentium server detected. The pixel will work independently.</p>
+            <p>To connect to a local Sentium server:</p>
             <ol>
-              <li>Make sure your Sentium server is running locally: <code>node server.js</code></li>
-              <li>Or use <code>?local=true&debug=true</code> in the URL to force local connection</li>
+              <li>Make sure your Sentium server is running locally</li>
+              <li>The server should be accessible at <code>http://localhost:3000</code></li>
+              <li>Use <code>?debug=true</code> in the URL to see connection details</li>
             </ol>
           `;
           helpMsg.style.cssText = 'position: fixed; font-size: 15px; top: 55px; left: 10px; background: rgba(0, 0, 0, 0.51); color: #fff; padding: 15px; border-radius: 5px; z-index: 1000; max-width: 280px; display: none;';
@@ -341,16 +343,16 @@ async function connectToSentiumServer() {
           
           // Add a button to show/hide the help message
           const helpBtn = document.createElement('button');
-          helpBtn.textContent = 'Connection Help';
+          helpBtn.textContent = 'Server Info';
           helpBtn.style.cssText = 'display: none; position: fixed; top: 10px; left: 10px; background: black; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; z-index: 1001;';
           helpBtn.onclick = function() {
             const helpEl = document.querySelector('.connection-help');
             if (helpEl.style.display === 'none') {
               helpEl.style.display = 'block';
-              this.textContent = 'Hide Help';
+              this.textContent = 'Hide Info';
             } else {
               helpEl.style.display = 'none';
-              this.textContent = 'Connection Help';
+              this.textContent = 'Server Info';
             }
           };
           
@@ -466,9 +468,8 @@ async function connectToLocalSentiumServer() {
           'Accept': 'application/json',
           'Origin': window.location.origin
         },
-        // Use no-cors mode as a fallback if CORS is an issue
-        // Note: no-cors will make the response opaque and unusable for JSON parsing
-        // but it will tell us if the server is reachable at all
+        // Add a timeout to prevent hanging
+        signal: AbortSignal.timeout ? AbortSignal.timeout(5000) : undefined
       });
       
       if (getResponse.ok) {
@@ -490,37 +491,51 @@ async function connectToLocalSentiumServer() {
         window.debugLog && window.debugLog(`GET request failed with status: ${getResponse.status}`, 'error');
       }
     } catch (getError) {
-      console.log('GET request failed, trying POST:', getError);
-      window.debugLog && window.debugLog(`GET request error: ${getError.message}`, 'error');
-      window.debugLog && window.debugLog('This is likely a CORS error. Try using a CORS browser extension.', 'warning');
+      // Only log to console in debug mode to reduce noise
+      if (window.debugLog) {
+        console.log('GET request failed, trying POST:', getError);
+        window.debugLog(`GET request error: ${getError.message}`, 'error');
+        window.debugLog('No local Sentium server detected. Running in standalone mode.', 'warning');
+      }
     }
     
     // Fall back to POST if GET fails
-    const response = await fetch(localServerUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        action: 'connect'
-      }),
-      mode: 'cors' // Enable CORS for cross-origin requests
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      if (data.success) {
-        console.log(`Connected to local Sentium server v${data.version}`);
-        
-        // Store the local server URL for future API calls
-        window.localServerUrl = localServerUrl;
-        
-        // Update status
-        updatePixelStatus('Connected to local Sentium server');
-        
-        return true;
+    try {
+      const response = await fetch(localServerUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          action: 'connect'
+        }),
+        mode: 'cors', // Enable CORS for cross-origin requests
+        signal: AbortSignal.timeout ? AbortSignal.timeout(5000) : undefined
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          console.log(`Connected to local Sentium server v${data.version}`);
+          
+          // Store the local server URL for future API calls
+          window.localServerUrl = localServerUrl;
+          
+          // Update status
+          updatePixelStatus('Connected to local Sentium server');
+          
+          return true;
+        }
+      }
+    } catch (postError) {
+      // Only log in debug mode to reduce console noise
+      if (window.debugLog) {
+        console.log('POST request also failed:', postError);
+        window.debugLog(`POST request error: ${postError.message}`, 'error');
+        window.debugLog('No local Sentium server available. Running in standalone mode.', 'info');
       }
     }
+    
     return false;
   } catch (error) {
     console.warn('Connection to local Sentium server failed:', error);
