@@ -107,6 +107,16 @@ input:checked + .connection-toggle-slider:before {
 .play-header {
   text-align: center;
   margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
 }
 
 .back-link {
@@ -149,14 +159,21 @@ input:checked + .connection-toggle-slider:before {
   text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.6);
 }
 
+.content {
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Position game container below the centered header */
 .game-container {
   display: flex;
   flex-direction: column;
   gap: 30px;
   max-width: 1200px;
-  margin: 20px 0 0 0; /* Adjusted top margin to be consistent with home page */
+  margin: 100vh 0 0 0; /* Start after the full screen header */
   align-items: center;
   width: 100%;
+  padding: 40px 20px;
 }
 
 .game-wrapper {
