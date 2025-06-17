@@ -20,15 +20,46 @@ window.localConnection = {
   connect: async function() {
     if (this.isConnected) return true;
     
+    // Check URL parameters for CORS bypass options
+    const urlParams = new URLSearchParams(window.location.search);
+    const corsIgnore = urlParams.get('cors') === 'ignore';
+    const forceLocal = urlParams.get('local') === 'true';
+    const customPort = urlParams.get('port') || '3000';
+    
+    // Check if we're in a CORS-restricted environment
+    const isHttps = window.location.protocol === 'https:';
+    const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+    const hasCorsIssues = isHttps && isProduction && !corsIgnore;
+    
+    if (hasCorsIssues && !forceLocal) {
+      console.log('CORS restriction detected: HTTPS production site cannot connect to HTTP localhost');
+      console.log('Solutions:');
+      console.log('   1. Use a CORS browser extension');
+      console.log('   2. Run the app locally (http://localhost or file://)');
+      console.log('   3. Set up HTTPS on your local server');
+      console.log('   4. Use a reverse proxy with CORS headers');
+      console.log('   5. Add ?cors=ignore to URL to suppress this warning');
+      console.log('   6. Add ?local=true to force connection attempt');
+      
+      // Show user-friendly CORS notification
+      this.showCorsNotification();
+      
+      // Skip connection attempt unless forced
+      if (!forceLocal) {
+        console.log('Skipping connection attempt due to CORS restrictions. Use ?local=true to force attempt.');
+        return false;
+      }
+    }
+    
     try {
       // Try multiple server endpoints for compatibility with different Sentium server versions
       const serverUrls = [
-        'http://localhost:3000/api/pixel',  // Primary endpoint
-        this.serverUrl,                     // Default or previously working URL
-        'http://localhost:3000',            // Root endpoint
-        'http://localhost:3000/api/sentium',// Alternative API endpoint
-        'http://localhost:3000/api/test-connection', // Specialized test endpoint
-        'http://127.0.0.1:3000/api/pixel'   // Alternative hostname
+        `http://localhost:${customPort}/api/pixel`,  // Primary endpoint with custom port
+        `http://localhost:${customPort}/api/test-connection`, // Test endpoint
+        `http://localhost:${customPort}`,            // Root endpoint
+        `http://localhost:${customPort}/api/sentium`,// Alternative API endpoint
+        `http://127.0.0.1:${customPort}/api/pixel`,  // Alternative hostname
+        this.serverUrl                               // Previously working URL
       ];
       
       for (const url of serverUrls) {
@@ -79,6 +110,7 @@ window.localConnection = {
       console.log(`Host: ${window.location.hostname}`);
       console.log(`Protocol: ${window.location.protocol}`);
       console.log(`Tried URLs: ${serverUrls.join(', ')}`);
+      console.log('CORS Status:', hasCorsIssues ? 'BLOCKED (HTTPS → HTTP)' : 'ALLOWED');
       console.log('=============================');
       
       return false;
@@ -98,7 +130,71 @@ window.localConnection = {
     if (window.dispatchEvent) {
       window.dispatchEvent(new CustomEvent('sentium:disconnected'));
     }
-  }
+  },
+  
+  // Show CORS notification to help users understand the connection issue
+  showCorsNotification: function() {
+    // Don't show multiple notifications
+    if (document.getElementById('cors-notification')) return;
+    
+    const notification = document.createElement('div');
+    notification.id = 'cors-notification';
+    notification.innerHTML = `
+      <div style="background: rgba(255, 69, 0, 0.9); color: white; padding: 15px; border-radius: 8px; font-family: 'HK Grotesk', Arial, sans-serif; font-size: 14px; line-height: 1.4; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+          <span style="font-size: 20px; margin-right: 8px;">[!]</span>
+          <strong>CORS Connection Blocked</strong>
+        </div>
+        <p style="margin: 0 0 10px 0;">Your local Sentium server cannot be reached from sentium.dev due to browser security restrictions.</p>
+        <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px; margin: 10px 0;">
+          <strong>Quick Fixes:</strong><br>
+          • Install <a href="https://chrome.google.com/webstore/detail/cors-unblock/lfhmikememgdcahcdlaciloancbhjino" target="_blank" style="color: #87CEEB;">CORS Unblock extension</a><br>
+          • Or run locally: <code style="background: rgba(255,255,255,0.2); padding: 2px 4px; border-radius: 2px;">http://localhost/sentium-pixel</code><br>
+          • Force connection: <a href="?local=true" style="color: #87CEEB;">Add ?local=true</a><br>
+          • Suppress warning: <a href="?cors=ignore" style="color: #87CEEB;">Add ?cors=ignore</a>
+        </div>
+        <button id="close-cors-notification" style="background: #fff; color: #333; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">Got it!</button>
+      </div>
+    `;
+    
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+      max-width: 400px;
+      animation: slideInRight 0.3s ease-out;
+    `;
+    
+    // Add CSS animation
+    if (!document.getElementById('cors-notification-styles')) {
+      const style = document.createElement('style');
+      style.id = 'cors-notification-styles';
+      style.textContent = `
+        @keyframes slideInRight {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(notification);
+    
+    // Add close button functionality
+    document.getElementById('close-cors-notification')?.addEventListener('click', () => {
+      notification.style.animation = 'slideInRight 0.3s ease-out reverse';
+      setTimeout(() => notification.remove(), 300);
+    });
+    
+    // Auto-remove after 15 seconds
+    setTimeout(() => {
+      if (document.getElementById('cors-notification')) {
+        notification.style.animation = 'slideInRight 0.3s ease-out reverse';
+        setTimeout(() => notification.remove(), 300);
+      }
+    }, 15000);
+  },
 };
 
 document.addEventListener('DOMContentLoaded', function() {

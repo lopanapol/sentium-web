@@ -1,7 +1,7 @@
 #!/usr/bin/env fish
 
-echo "🌟 Starting Sentium Pixel Pixel Demo Mode 🌟"
-echo "=================================="
+echo "Starting Sentium Pixel Pixel Demo Mode"
+echo "======================================"
 echo ""
 
 # Check if required tools are installed
@@ -15,7 +15,7 @@ for tool in $required_tools
 end
 
 if test (count $missing_tools) -gt 0
-    echo "❌ Error: The following required tools are missing:"
+    echo "Error: The following required tools are missing:"
     for tool in $missing_tools
         echo "   - $tool"
     end
@@ -33,7 +33,7 @@ else
 end
 
 # Set up demo environment
-echo "🔧 Setting up demo environment..."
+echo "Setting up demo environment..."
 # Create .env file for demo mode
 echo "DEMO_MODE=true" > .env
 echo "NO_SENTIUM_REQUIRED=true" >> .env
@@ -41,8 +41,8 @@ echo "PORT=3000" >> .env
 
 # Start the server
 echo ""
-echo "🚀 Starting Sentium Pixel in demo mode..."
-echo "📱 Open your browser at http://localhost:3000"
+echo "Starting Sentium Pixel in demo mode..."
+echo "Open your browser at http://localhost:3000"
 echo ""
 echo "Press Ctrl+C to stop the server"
 echo ""
@@ -53,4 +53,4 @@ npm start
 # Cleanup
 rm -f .env
 echo ""
-echo "👋 Thank you for trying Sentium Pixel Pixel Demo!"
+echo "Thank you for trying Sentium Pixel Pixel Demo!"

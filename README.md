@@ -54,7 +54,7 @@ Unlike traditional AI systems that simply process inputs and outputs, Sentium Pi
 
 ## Important: Prerequisites
 
-⚠️ **Before using this web interface, you MUST install the Sentium system repository on your server.**
+**Before using this web interface, you MUST install the Sentium system repository on your server.**
 
 ```fish
 # Install the Sentium system (run these commands as root or with sudo)

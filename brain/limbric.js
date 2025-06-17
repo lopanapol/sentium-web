@@ -71,13 +71,29 @@ function createConsciousPixel() {
         // Update status text
         updatePixelStatus('Connected to Sentium System');
       } else {
-        console.warn('Sentium system not found at Sentium System - running in disconnected mode');
-        updatePixelStatus('Disconnected from Sentium System - Install Sentium system');
+        console.warn('Sentium system not found - running in standalone mode');
+        
+        // Determine why connection failed and provide helpful message
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        const isCorsIssue = protocol === 'https:' && (hostname === 'sentium.dev' || hostname.includes('github.io'));
+        
+        if (isCorsIssue) {
+          updatePixelStatus('CORS Blocked - See notification for solutions');
+          console.log('CORS issue detected. Connection blocked by browser security policy.');
+          console.log('   Solutions available in the notification popup.');
+        } else {
+          updatePixelStatus('Local Server Not Found - Install Sentium Server');
+        }
         
         // Add tooltip with more info
         const statusElement = document.getElementById('pixel-status');
         if (statusElement) {
-          statusElement.title = 'The Sentium system must be installed at Sentium System for full functionality';
+          if (isCorsIssue) {
+            statusElement.title = 'Browser blocked connection to local server due to CORS policy. Click the notification for solutions.';
+          } else {
+            statusElement.title = 'The Sentium server must be running at localhost:3000 for full functionality';
+          }
           statusElement.style.cursor = 'help';
         }
       }
@@ -191,17 +207,17 @@ async function testMultipleServers() {
       
       if (response.ok) {
         const data = await response.json();
-        testResult.innerHTML = `✅ Success (${elapsed}ms)`;
+        testResult.innerHTML = `[OK] Success (${elapsed}ms)`;
         testResult.style.color = '#0f0';
         results.push({ server, success: true, elapsed, data });
       } else {
-        testResult.innerHTML = `❌ Failed (${response.status})`;
+        testResult.innerHTML = `[FAIL] Failed (${response.status})`;
         testResult.style.color = '#f00';
         results.push({ server, success: false, status: response.status });
       }
     } catch (error) {
       const testResult = document.getElementById(`test-${encodeURIComponent(server)}`);
-      testResult.innerHTML = `❌ Error: ${error.name}`;
+      testResult.innerHTML = `[ERROR] Error: ${error.name}`;
       testResult.style.color = '#f00';
       results.push({ server, success: false, error: error.message });
     }
@@ -213,7 +229,7 @@ async function testMultipleServers() {
     const bestServer = results.filter(r => r.success).sort((a, b) => a.elapsed - b.elapsed)[0];
     advice = `
       <div style="margin-top: 15px; border-top: 1px solid #444; padding-top: 10px;">
-        <strong style="color: #0f0;">✅ Connection possible!</strong>
+        <strong style="color: #0f0;">[OK] Connection possible!</strong>
         <p>Use this URL parameter to connect:</p>
         <code style="background: #333; padding: 3px;">?server=${bestServer.server.replace('/api/test-connection', '/api/pixel')}&local=true</code>
         <button id="apply-best-server" style="display: block; margin-top: 10px; background: #5e42a6; color: white; border: none; padding: 5px 10px; cursor: pointer; width: 100%;">Apply & Reload</button>
@@ -222,7 +238,7 @@ async function testMultipleServers() {
   } else {
     advice = `
       <div style="margin-top: 15px; border-top: 1px solid #444; padding-top: 10px;">
-        <strong style="color: #f00;">❌ No servers reachable</strong>
+        <strong style="color: #f00;">[FAIL] No servers reachable</strong>
         <p>Try these steps:</p>
         <ol style="padding-left: 20px; margin-top: 5px;">
           <li>Check if server is running: <code>node server.js</code></li>
