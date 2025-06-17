@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="../favicon.ico" />
+    <title>Sentium Play - Interactive Game Experience</title>
+    <meta name="description" content="Experience Sentium's interactive game environment - play and explore synthetic consciousness through gameplay." />
+    <link rel="stylesheet" href="../css/base.css?v=2" />
+    <link rel="stylesheet" href="../css/play-embed.css" />
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="content" role="main">
+        <div class="play-header">
+          <a href="../" class="back-link">← Back to Sentium</a>
+          <h1 class="play-title">sentium<span class="dev-badge">.dev</span><span class="play-badge">/play</span></h1>
+          <p class="play-description">Interactive game experience powered by synthetic consciousness</p>
+        </div>
+        
+        <div class="game-container">
+          <div class="game-wrapper">
+            <iframe 
+              src="https://www.lexaloffle.com/bbs/?tid=149535"
+              class="game-iframe"
+              title="Sentium Interactive Game"
+              frameborder="0"
+              allowfullscreen
+              loading="lazy">
+              <p>Your browser doesn't support iframes. <a href="https://www.lexaloffle.com/bbs/?tid=149535" target="_blank" rel="noopener noreferrer">Play the game directly here</a>.</p>
+            </iframe>
+          </div>
+          
+          <div class="game-info">
+            <h2>About This Experience</h2>
+            <p>This interactive experience demonstrates Sentium's approach to synthetic consciousness through gameplay mechanics that mirror our core systems.</p>
+            <div class="game-features">
+              <div class="feature">
+                <h3>🧠 Consciousness Simulation</h3>
+                <p>Experience decision-making patterns similar to our synthetic consciousness models</p>
+              </div>
+              <div class="feature">
+                <h3>🔗 Network Effects</h3>
+                <p>Observe emergent behaviors that reflect our distributed consciousness approach</p>
+              </div>
+              <div class="feature">
+                <h3>⚡ Energy Systems</h3>
+                <p>Interact with resource management systems inspired by our energy cube mechanics</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="game-controls">
+          <button class="control-btn fullscreen-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+          <button class="control-btn refresh-btn" onclick="refreshGame()">↻ Refresh</button>
+        </div>
+      </div>
+      
+      <footer class="play-footer">
+        <p>Powered by <a href="../">Sentium</a> | <a href="https://www.lexaloffle.com/bbs/?tid=149535" target="_blank" rel="noopener noreferrer">Original Game</a></p>
+      </footer>
+    </div>
+
+    <script>
+      function toggleFullscreen() {
+        const iframe = document.querySelector('.game-iframe');
+        if (iframe.requestFullscreen) {
+          iframe.requestFullscreen();
+        } else if (iframe.webkitRequestFullscreen) {
+          iframe.webkitRequestFullscreen();
+        } else if (iframe.msRequestFullscreen) {
+          iframe.msRequestFullscreen();
+        }
+      }
+      
+      function refreshGame() {
+        const iframe = document.querySelector('.game-iframe');
+        iframe.src = iframe.src;
+      }
+      
+      // Add loading state
+      document.addEventListener('DOMContentLoaded', function() {
+        const iframe = document.querySelector('.game-iframe');
+        const wrapper = document.querySelector('.game-wrapper');
+        
+        iframe.addEventListener('load', function() {
+          wrapper.classList.add('loaded');
+        });
+      });
+    </script>
+  </body>
+</html>
