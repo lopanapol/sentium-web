@@ -73,7 +73,7 @@ const EVOLUTION_DATA = [
   { 
     threshold: 700,
     form: { type: 'sphere', size: 1.5, is3D: true, shapeShift: 70 },
-    color: { aura: 85, primary: '#ffca3a' },
+    color: { aura: 85, primary: '#ffffff' },
     abilities: ['hasMultiplicity'],
     description: 'Sentium Pixel has evolved into a 3D sphere! It can now create temporary copies of itself.'
   },
