@@ -152,9 +152,11 @@ body {
 .wrapper {
   min-height: var(--wrapper-height);
   display: grid;
-  place-items: center;
+  align-items: start;
+  justify-items: center;
   margin: 0 1rem;
   min-height: 100vh; /* Changed from height to min-height to allow expansion */
+  padding-top: 15vh; /* Increased spacing at the top */
 }
 
 .content {
@@ -163,9 +165,9 @@ body {
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  min-height: 100vh;
+  min-height: 70vh; /* Reduced from 100vh to give more breathing room */
   position: relative;
-  top: -50px;
+  top: 0; /* Removed negative offset */
   padding: 20px 0; /* Add padding for mobile scroll spacing */
 }
 
