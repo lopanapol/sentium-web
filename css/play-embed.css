@@ -129,12 +129,18 @@ input:checked + .connection-toggle-slider:before {
   transform: translateY(-1px);
 }
 
-.play-title {
-  font-size: 2.5rem;
-  margin-bottom: 10px;
+/* Override title styles for play page to match home page */
+.play-header .title {
   color: black;
-  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+  text-shadow: 10px 9px 8px #57CBF8;
+  font-family: 'Boogie Blocks';
+  font-style: normal;
   font-weight: bold;
+  font-size: 48px;
+  line-height: 105%;
+  margin: 0;
+  line-height: 1em;
+  transition: text-shadow 0.8s ease-in-out;
 }
 
 .play-badge {
@@ -143,21 +149,14 @@ input:checked + .connection-toggle-slider:before {
   text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.6);
 }
 
-.play-description {
-  color: black;
-  font-size: 1.1rem;
-  margin-bottom: 0;
-  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7);
-  font-weight: 500;
-}
-
 .game-container {
   display: flex;
   flex-direction: column;
   gap: 30px;
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 20px 0 0 0; /* Adjusted top margin to be consistent with home page */
   align-items: center;
+  width: 100%;
 }
 
 .game-wrapper {
@@ -319,9 +318,26 @@ input:checked + .connection-toggle-slider:before {
   text-decoration: underline;
 }
 
+/* Play page logo adjustments */
+.play-header #sentium-logo {
+  margin-bottom: 20px;
+}
+
+.play-header .illustration {
+  margin-bottom: 8px;
+}
+
+/* Ensure subtitle styling is consistent */
+.play-header .subtitle {
+  color: black;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  margin-bottom: 15px;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
-  .play-title {
+  .play-header .title {
     font-size: 2rem;
   }
   
@@ -340,7 +356,7 @@ input:checked + .connection-toggle-slider:before {
 }
 
 @media (max-width: 480px) {
-  .play-title {
+  .play-header .title {
     font-size: 1.5rem;
   }
   

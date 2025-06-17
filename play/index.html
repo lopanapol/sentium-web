@@ -7,17 +7,65 @@
     <title>Sentium Play - Interactive Game Experience</title>
     <meta name="description" content="Experience Sentium's interactive game environment - play and explore synthetic consciousness through gameplay." />
     <link rel="stylesheet" href="../css/base.css?v=2" />
+    <link rel="stylesheet" href="../css/death-effects.css" />
+    <link rel="stylesheet" href="../css/rainbow-bubble.css" />
+    <link rel="stylesheet" href="../css/evolution.css" />
+    <link rel="stylesheet" href="../css/3d-shapes.css" />
+    <link rel="stylesheet" href="../css/pixel-visibility-fix.css" />
+    <link rel="stylesheet" href="../css/dev-enhancements.css" />
+    <link rel="stylesheet" href="../css/energy-cube-connection.css" />
     <link rel="stylesheet" href="../css/play-embed.css" />
+    <!-- Animation control system loads first so it's available to all other scripts -->
+    <script src="../brain/animation-control.js" defer></script>
+    <script src="../brain/limbric.js" defer></script>
+    <script src="../brain/energy-system.js" defer></script>
+    <script src="../brain/simple-conscious.js" defer></script>
+    <script src="../brain/audio-player.js" defer></script>
+    <script src="../brain/evolution-system.js" defer></script>
+    <script src="../brain/pixel-merger.js" defer></script>
+    <script src="../brain/cell-division-system.js" defer></script>
+    <script src="../brain/logo-animation-control.js" defer></script>
+    <script src="../network/link-controller.js" defer></script>
   </head>
   <body>
     <div class="wrapper">
+      <div id="pixel-status">Status: Disconnected</div>
       <div class="content" role="main">
-        <div class="play-header">
-          <a href="../" class="back-link">← Back to Sentium</a>
-          <h1 class="play-title">sentium<span class="dev-badge">.dev</span><span class="play-badge">/play</span></h1>
-          <p class="play-description">Interactive game experience powered by synthetic consciousness</p>
+        <div id="sentium-logo" 
+          class="illustration bubble-logo" 
+          title="Click to pause/resume all animations">
+          <div class="bubble-inner"></div>
+          <div class="bubble-highlight"></div>
+          <div class="bubble-highlight-secondary"></div>
+          <img src="../images/sentium-logo-black.png" class="bubble-logo-image" alt="Sentium Logo">
+          <div class="pause-indicator"></div>
         </div>
         
+        <div class="play-header">
+          <a href="../" class="back-link">← Back to Sentium</a>
+          <h1 class="title">sentium<span class="dev-badge">.dev</span><span class="play-badge">/play</span></h1>
+          <div class="instructions" id="web-info">
+            <h2 class="subtitle">Interactive Game Experience</h2>
+            <p class="home-box">
+              Experience synthetic consciousness through interactive gameplay mechanics.
+            </p>
+            <div class="sound-toggle-container">
+              <label class="sound-toggle-switch">
+                <input type="checkbox" id="sound-toggle">
+                <span class="sound-toggle-slider"></span>
+              </label>
+              <span class="sound-toggle-label">Play Sound</span>
+            </div>
+            
+            <div class="connection-toggle-container">
+              <label class="connection-toggle-switch">
+                <input type="checkbox" id="connection-toggle">
+                <span class="connection-toggle-slider"></span>
+              </label>
+              <span class="connection-toggle-label">Connect</span>
+            </div>
+          </div>
+        </div>
         <div class="game-container">
           <div class="game-wrapper pico8-size">
             <iframe 
@@ -31,6 +79,11 @@
               loading="lazy">
               <p>Your browser doesn't support iframes. <a href="https://www.lexaloffle.com/bbs/widget.php?pid=sentium" target="_blank" rel="noopener noreferrer">Play the game directly here</a>.</p>
             </iframe>
+          </div>
+          
+          <div class="game-controls">
+            <button class="control-btn fullscreen-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+            <button class="control-btn refresh-btn" onclick="refreshGame()">↻ Refresh</button>
           </div>
           
           <div class="game-info">
@@ -51,11 +104,6 @@
               </div>
             </div>
           </div>
-        </div>
-        
-        <div class="game-controls">
-          <button class="control-btn fullscreen-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
-          <button class="control-btn refresh-btn" onclick="refreshGame()">↻ Refresh</button>
         </div>
       </div>
       
@@ -89,6 +137,119 @@
         iframe.addEventListener('load', function() {
           wrapper.classList.add('loaded');
         });
+      });
+      
+      // Connection toggle functionality (copied from home page)
+      document.addEventListener('DOMContentLoaded', function() {
+        const connectionToggle = document.getElementById('connection-toggle');
+        
+        if (connectionToggle) {
+          connectionToggle.addEventListener('change', async function() {
+            const isConnected = this.checked;
+            
+            // Update energy cube appearance and connection state
+            const energyCubes = document.querySelectorAll('.energy-cube');
+            
+            if (isConnected) {
+              // Try to connect
+              if (window.localConnection) {
+                try {
+                  const success = await window.localConnection.connect();
+                  
+                  // Update UI based on connection success
+                  if (success) {
+                    // Connection was successful
+                    energyCubes.forEach(cube => cube.classList.add('connected'));
+                    
+                    // Show connection message
+                    showMessage('Connected to local server', '#39ffba');
+                    
+                    // Update pixel status
+                    const pixelStatus = document.getElementById('pixel-status');
+                    if (pixelStatus) {
+                      pixelStatus.textContent = 'Status: Connected';
+                      pixelStatus.classList.add('connected');
+                    }
+                  } else {
+                    // Connection failed
+                    this.checked = false;
+                    showMessage('Sleeping Field', '#ff3939');
+                  }
+                } catch (error) {
+                  console.error('Connection error:', error);
+                  this.checked = false;
+                  showMessage('Connection error', '#ff3939');
+                }
+              }
+            } else {
+              // Disconnect
+              if (window.localConnection) {
+                window.localConnection.disconnect();
+              }
+              
+              // Update UI
+              energyCubes.forEach(cube => cube.classList.remove('connected'));
+              
+              // Show disconnection message
+              showMessage('Disconnected from local server', '#f8f8f8');
+              
+              // Update pixel status
+              const pixelStatus = document.getElementById('pixel-status');
+              if (pixelStatus) {
+                pixelStatus.textContent = 'Status: Disconnected';
+                pixelStatus.classList.remove('connected');
+              }
+            }
+          });
+        }
+        
+        // Helper function to show connection messages
+        function showMessage(message, color) {
+          // Check if a message element already exists
+          let messageElement = document.querySelector('.connection-message');
+          
+          if (!messageElement) {
+            // Create a new message element if it doesn't exist
+            messageElement = document.createElement('div');
+            messageElement.className = 'connection-message';
+            document.body.appendChild(messageElement);
+            
+            // Add styles if needed
+            if (!document.getElementById('connection-message-styles')) {
+              const styles = document.createElement('style');
+              styles.id = 'connection-message-styles';
+              styles.textContent = `
+                .connection-message {
+                  position: fixed;
+                  top: 60px;
+                  left: 50%;
+                  transform: translateX(-50%);
+                  background-color: rgba(0, 0, 0, 0.8);
+                  color: ${color || '#39ffba'};
+                  padding: 10px 20px;
+                  border-radius: 20px;
+                  font-family: var(--font-family, sans-serif);
+                  font-size: 16px;
+                  z-index: 10000;
+                  opacity: 0;
+                  transition: opacity 0.3s;
+                  pointer-events: none;
+                }
+              `;
+              document.head.appendChild(styles);
+            }
+          }
+          
+          // Update message and show with !important to ensure visibility
+          messageElement.textContent = message;
+          messageElement.style.color = color || '#39ffba';
+          messageElement.style.cssText = 'opacity: 1 !important; visibility: visible !important; z-index: 100000 !important;';
+          
+          // Hide after 2 seconds
+          setTimeout(() => {
+            messageElement.style.opacity = '0';
+          }, 2000);
+        }
       });
     </script>
   </body>
