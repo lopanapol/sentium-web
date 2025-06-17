@@ -103,6 +103,16 @@ input:checked + .connection-toggle-slider:before {
   font-weight: bold;
 }
 
+/* Play page logo positioning */
+#sentium-logo {
+  position: fixed;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  margin-bottom: 0;
+}
+
 /* Play page styles */
 .play-header {
   text-align: center;
@@ -117,6 +127,7 @@ input:checked + .connection-toggle-slider:before {
   left: 0;
   right: 0;
   width: 100%;
+  padding-top: 150px; /* Add space for the fixed logo */
 }
 
 .back-link {
