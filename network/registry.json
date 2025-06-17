@@ -1,0 +1,49 @@
+{
+  "network": {
+    "name": "Sentium Ads Network",
+    "version": "1.0.0-alpha",
+    "lastUpdated": "2025-06-17T12:00:00Z",
+    "totalNodes": 0,
+    "totalBrandPixels": 0,
+    "networkStatus": "initializing"
+  },
+  "nodes": [],
+  "sampleNodes": [
+    {
+      "id": "demo-node-1",
+      "name": "Demo Publisher Node",
+      "url": "http://localhost:3001",
+      "status": "offline",
+      "location": {
+        "country": "US",
+        "city": "San Francisco"
+      },
+      "capabilities": {
+        "maxBrandPixels": 10,
+        "supportedFeatures": ["basic-pixels", "evolution", "analytics"]
+      },
+      "brandPixels": [
+        {
+          "brandId": "demo-tech-corp",
+          "pixelId": "tech-pixel-001",
+          "status": "active",
+          "interactions": 0,
+          "evolutionLevel": 1
+        }
+      ],
+      "performance": {
+        "uptime": "99.5%",
+        "avgResponseTime": "150ms",
+        "totalInteractions": 0
+      },
+      "lastSeen": "2025-06-17T12:00:00Z",
+      "registered": "2025-06-17T12:00:00Z"
+    }
+  ],
+  "metadata": {
+    "registryVersion": "1.0",
+    "updateFrequency": "5min",
+    "maintainer": "sentium.dev",
+    "documentation": "https://sentium.dev/docs/network-api"
+  }
+}
