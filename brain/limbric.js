@@ -29,7 +29,7 @@ function createConsciousPixel() {
     velocityX: (Math.random() - 0.5) * 1.5,
     velocityY: (Math.random() - 0.5) * 1.5,
     size: 4,
-    color: getLogoColor(),
+    color: 'rgb(255, 255, 255)', // Start with white color
     targetColor: null,
     colorTransitionProgress: 0,
     colorTransitionDuration: 0,

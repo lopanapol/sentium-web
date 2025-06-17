@@ -460,7 +460,7 @@ a {
   position: fixed;
   width: 12px;
   height: 12px;
-  background-color: rgb(165, 46, 255);
+  background-color: rgb(255, 255, 255);
   border-radius: 2px; /* Slight rounding for a softer look */
   z-index: 9999;
   pointer-events: none;
