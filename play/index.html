@@ -16,32 +16,34 @@
           <!--a href="../" class="back-link">← Back to Sentium</a-->
           <h1 class="title">sentium<span class="dev-badge">.dev</span><span class="play-badge">/play</span></h1>
         </div>
-        <div class="game-container">
-          <div class="game-wrapper pico8-size">
-            <iframe 
-              src="https://www.lexaloffle.com/bbs/widget.php?pid=sentium&autostart=1" 
-              allowfullscreen 
-              class="game-iframe"
-              title="Sentium Interactive Game"
-              style="border:none; overflow:hidden"
-              loading="lazy">
-              <p>Your browser doesn't support iframes. <a href="https://www.lexaloffle.com/bbs/?tid=149535" target="_blank" rel="noopener noreferrer">Play the game directly here</a>.</p>
-            </iframe>
-          </div>
+        <div class="pico8_container">
+          <iframe 
+            src="https://www.lexaloffle.com/bbs/widget.php?pid=sentium&autostart=1" 
+            allowfullscreen 
+            id="game-iframe"
+            class="game-iframe"
+            title="Sentium Interactive Game"
+            style="border:none; overflow:hidden"
+            loading="lazy">
+            <p>Your browser doesn't support iframes. <a href="https://www.lexaloffle.com/bbs/?tid=149535" target="_blank" rel="noopener noreferrer">Play the game directly here</a>.</p>
+          </iframe>
         </div>
       </div>
     </div>
 
     <script>
-      // Add loading state
-      document.addEventListener('DOMContentLoaded', function() {
-        const iframe = document.querySelector('.game-iframe');
-        const wrapper = document.querySelector('.game-wrapper');
-        
-        iframe.addEventListener('load', function() {
-          wrapper.classList.add('loaded');
-        });
-      });
+      // Key blocker: prevent cursor keys from scrolling page while playing cart
+      function onKeyDown_blocker(event) {
+        event = event || window.event;
+        var o = document.activeElement;
+        if (!o || o == document.body || o.tagName == "iframe") {
+          if ([32, 37, 38, 39, 40].indexOf(event.keyCode) > -1) {
+            if (event.preventDefault) event.preventDefault();
+          }
+        }
+      }
+
+      document.addEventListener('keydown', onKeyDown_blocker, false);
     </script>
   </body>
 </html>

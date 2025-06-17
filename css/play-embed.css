@@ -175,62 +175,50 @@ input:checked + .connection-toggle-slider:before {
 }
 
 /* Position game container below the centered header */
-.game-container {
+.pico8_container {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -webkit-flex-direction: column;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+      -ms-flex-align: center;
+          align-items: center;
   max-width: 1200px;
   margin: 20px auto;
-  align-items: center;
   width: 100%;
   padding: 10px;
 }
 
-.game-wrapper {
-  position: relative;
-  width: 100%;
-  padding-bottom: 56.25%; /* 16:9 aspect ratio */
-  height: 0;
+#game-iframe {
+  margin-top: 10px;
+  width: 290px;
+  height: 270px;
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   background: #1a1a1a;
 }
 
-.game-wrapper.pico8-size {
-  width: 512px;
-  height: 512px;
-  padding-bottom: 0; /* Reset the aspect ratio padding for square games */
-  max-width: 90vw;
-  max-height: 90vw;
-  position: relative;
+@media screen and (min-width: 580px) and (min-height: 600px) {
+  #game-iframe {
+    margin-top: 20px;
+    width: 580px;
+    height: 540px;
+  }
 }
 
-.game-wrapper::before {
-  content: "Loading game...";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: #ccc;
-  font-size: 1.2rem;
-  z-index: 1;
-}
-
-.game-wrapper.loaded::before {
-  display: none;
-}
-
-.game-iframe {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border: none;
-  object-fit: contain;
-  max-width: 100%;
-  max-height: 100%;
+@media screen and (min-width: 1160px) and (min-height: 1150px) {
+  #game-iframe {
+    margin-top: 30px;
+    width: 1160px;
+    height: 1080px;
+  }
 }
 
 .game-info {
@@ -374,22 +362,9 @@ input:checked + .connection-toggle-slider:before {
     margin: 0 10px;
   }
   
-  .game-container {
+  .pico8_container {
     margin: 10px auto;
     padding: 5px;
-  }
-  
-  .game-wrapper.pico8-size {
-    max-width: calc(100vw - 20px);
-    max-height: calc(100vw - 20px);
-    margin-bottom: 100px;
-    width: min(90vw, 512px);
-    height: min(90vw, 512px);
-  }
-  
-  .game-iframe {
-    width: 100% !important;
-    height: 100% !important;
   }
   
   .game-features {
@@ -418,21 +393,9 @@ input:checked + .connection-toggle-slider:before {
     font-size: 0.9em;
   }
   
-  .game-container {
+  .pico8_container {
     margin: 5px auto;
     padding: 0;
-  }
-  
-  .game-wrapper.pico8-size {
-    max-width: calc(100vw - 10px);
-    max-height: calc(100vw - 10px);
-    width: min(calc(100vw - 10px), 280px);
-    height: min(calc(100vw - 10px), 280px);
-  }
-  
-  .game-iframe {
-    width: 100% !important;
-    height: 100% !important;
   }
   
   .game-info {
@@ -452,20 +415,8 @@ input:checked + .connection-toggle-slider:before {
     margin: 0;
   }
   
-  .game-container {
+  .pico8_container {
     margin: 5px auto;
-  }
-  
-  .game-wrapper.pico8-size {
-    max-width: calc(100vw - 10px);
-    max-height: calc(100vw - 10px);
-    width: calc(100vw - 10px);
-    height: calc(100vw - 10px);
-  }
-  
-  .game-iframe {
-    width: 100% !important;
-    height: 100% !important;
   }
 }
 
@@ -476,17 +427,7 @@ input:checked + .connection-toggle-slider:before {
     margin-bottom: 5px;
   }
   
-  .game-container {
+  .pico8_container {
     margin: 10px auto;
-  }
-  
-  .game-wrapper.pico8-size {
-    max-height: 80vh;
-    max-width: 80vh;
-  }
-  
-  .game-iframe {
-    width: 80vh !important;
-    height: 80vh !important;
   }
 }
