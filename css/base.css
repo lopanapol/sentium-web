@@ -182,9 +182,9 @@ body {
   margin: 16px 0 0 0; /* Add top margin to create space between logo and title */
   line-height: 1em;
   transition: text-shadow 0.8s ease-in-out;
-  text-align: left; /* Align title text to the left */
+  text-align: center; /* Center align title text */
   order: 2; /* Ensure title comes after logo */
-  align-self: flex-start; /* Align title to the left */
+  align-self: center; /* Center align title */
 }
 
 .illustration {
