@@ -179,15 +179,19 @@ body {
   font-weight: bold;
   font-size: 48px;
   line-height: 105%;
-  margin: 0;
+  margin: 16px 0 0 0; /* Add top margin to create space between logo and title */
   line-height: 1em;
   transition: text-shadow 0.8s ease-in-out;
+  text-align: left; /* Align title text to the left */
+  order: 2; /* Ensure title comes after logo */
+  align-self: flex-start; /* Align title to the left */
 }
 
 .illustration {
   border-radius: 50%;
   margin-bottom: 8px;
   transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  order: 1; /* Ensure logo/illustration always comes first */
 }
 
 .illustration:hover {
@@ -213,6 +217,8 @@ body {
 
 .instructions {
   margin: 1rem auto 0;
+  order: 3; /* Ensure instructions come after title */
+  width: 100%; /* Ensure full width for proper centering */
 }
 
 button,
@@ -320,6 +326,9 @@ a {
   transform-style: preserve-3d;
   perspective: 800px;
   cursor: pointer;
+  order: 1; /* Ensure logo comes first */
+  margin-bottom: 8px; /* Space between logo and title */
+  align-self: flex-start; /* Align logo to the left */
 }
 
 /* Add 3D depth to the bubble */
