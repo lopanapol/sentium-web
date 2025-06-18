@@ -38,7 +38,8 @@
   cursor: pointer;
 }
 
-.network-status-indicator {
+/* Widget status indicator (small dot) */
+.network-widget .network-status-indicator {
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -46,11 +47,11 @@
   margin-right: 8px;
 }
 
-.network-status-indicator.excellent { background: #00ff41; }
-.network-status-indicator.good { background: #41ff00; }
-.network-status-indicator.fair { background: #ffff00; }
-.network-status-indicator.poor { background: #ff4100; }
-.network-status-indicator.unknown { background: #666; }
+.network-widget .network-status-indicator.excellent { background: #00ff41; }
+.network-widget .network-status-indicator.good { background: #41ff00; }
+.network-widget .network-status-indicator.fair { background: #ffff00; }
+.network-widget .network-status-indicator.poor { background: #ff4100; }
+.network-widget .network-status-indicator.unknown { background: #666; }
 
 .network-stats {
   line-height: 1.4;
@@ -130,6 +131,12 @@
 
 .status-dot.offline {
   background: #f44336;
+}
+
+.status-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: inherit;
 }
 
 /* Stats Grid */
