@@ -156,7 +156,7 @@ body {
   justify-items: center;
   margin: 0 1rem;
   min-height: 100vh; /* Changed from height to min-height to allow expansion */
-  padding-top: 15vh; /* Increased spacing at the top */
+  padding-top: 10vh; /* Increased spacing at the top */
 }
 
 .content {
@@ -1100,10 +1100,5 @@ input:checked + .sound-toggle-slider:before {
   .content {
     padding: 30px 0;
     top: -20px; /* Reduce negative top positioning */
-  }
-  
-  /* Ensure elements don't get cut off */
-  .title, .subtitle, .home-box, .instructions {
-    margin-bottom: 1rem;
   }
 }
