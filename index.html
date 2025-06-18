@@ -55,7 +55,7 @@
             <span class="sound-toggle-label">Play Sound</span>
           </div>
           
-          <div class="connection-toggle-container">
+          <div class="connection-toggle-container server-unavailable">
             <label class="connection-toggle-switch">
               <input type="checkbox" id="connection-toggle">
               <span class="connection-toggle-slider"></span>
@@ -109,6 +109,52 @@
       // Connection toggle functionality
       document.addEventListener('DOMContentLoaded', function() {
         const connectionToggle = document.getElementById('connection-toggle');
+        const connectionToggleContainer = document.querySelector('.connection-toggle-container');
+        
+        // Function to check if server is available
+        async function checkServerAvailability() {
+          try {
+            const serverUrls = [
+              'http://localhost:3000/api/pixel',
+              'http://localhost:3000/api/health',
+              'http://localhost:3000/health',
+              'http://localhost:3000/'
+            ];
+            
+            for (const url of serverUrls) {
+              try {
+                const response = await fetch(url, {
+                  method: 'GET',
+                  mode: 'cors',
+                  cache: 'no-cache',
+                  timeout: 2000
+                });
+                
+                // If we get any response (even 404), server is running
+                if (response) {
+                  return true;
+                }
+              } catch (error) {
+                // Continue to next URL
+                continue;
+              }
+            }
+            return false;
+          } catch (error) {
+            return false;
+          }
+        }
+        
+        // Check server availability and show/hide connection toggle
+        checkServerAvailability().then(isServerAvailable => {
+          if (connectionToggleContainer) {
+            if (isServerAvailable) {
+              connectionToggleContainer.classList.remove('server-unavailable');
+            } else {
+              connectionToggleContainer.classList.add('server-unavailable');
+            }
+          }
+        });
         
         if (connectionToggle) {
           connectionToggle.addEventListener('change', async function() {

@@ -114,3 +114,8 @@ input:checked + .connection-toggle-slider:before {
   font-weight: bold;
   color: #333;
 }
+
+/* Hide connection toggle when no server is available */
+.connection-toggle-container.server-unavailable {
+  display: none !important;
+}
