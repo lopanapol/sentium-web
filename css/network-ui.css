@@ -77,7 +77,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
-  color: var(--color-text-main);
+  color: black;
 }
 
 .dashboard-header {
@@ -94,7 +94,7 @@
 }
 
 .logo-section .back-link {
-  color: rgba(255, 255, 255, 0.7);
+  color: black;
   text-decoration: none;
   margin-bottom: 0.5rem;
   display: block;
@@ -102,7 +102,7 @@
 }
 
 .logo-section .back-link:hover {
-  color: var(--color-text-main);
+  color: #333;
 }
 
 .dashboard-header h1 {
@@ -155,7 +155,7 @@
 .status-text {
   font-size: 0.9rem;
   font-weight: 500;
-  color: inherit;
+  color: black;
 }
 
 /* Stats Grid */
@@ -235,10 +235,11 @@
   font-size: 2rem;
   font-weight: bold;
   margin-bottom: 0.25rem;
+  color: black;
 }
 
 .stat-label {
-  color: rgba(255, 255, 255, 0.8);
+  color: black;
   font-size: 0.9rem;
 }
 
@@ -281,7 +282,7 @@
 
 .map-placeholder {
   text-align: center;
-  color: rgba(255, 255, 255, 0.6);
+  color: black;
 }
 
 .pulse-loader {
@@ -355,10 +356,11 @@
 .node-name {
   font-weight: bold;
   margin-bottom: 0.25rem;
+  color: black;
 }
 
 .node-details {
-  color: rgba(255, 255, 255, 0.7);
+  color: black;
   font-size: 0.9rem;
 }
 
@@ -418,7 +420,7 @@
 
 .brand-info p {
   margin: 0;
-  color: rgba(255, 255, 255, 0.7);
+  color: black;
   font-size: 0.9rem;
 }
 
@@ -447,7 +449,7 @@
 
 .btn-secondary {
   background: rgba(255, 255, 255, 0.12);
-  color: var(--color-text-main);
+  color: black;
   border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
@@ -455,7 +457,7 @@
   padding: 0.4rem 0.8rem;
   font-size: 0.8rem;
   background: rgba(255, 255, 255, 0.12);
-  color: var(--color-text-main);
+  color: black;
   border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
@@ -486,7 +488,7 @@
   background: rgba(0, 0, 0, 0.2);
   border-radius: 25px;
   text-decoration: none;
-  color: var(--color-text-main);
+  color: black;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
