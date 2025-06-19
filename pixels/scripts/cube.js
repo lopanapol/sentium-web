@@ -14,13 +14,86 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x000000, 0); // Transparent background
 
-// Create a smaller cube with black edges only (no diagonals)
+// Initialize database
+const cubeDB = new CubeDB();
+let currentCubeData = null;
+
+// Function to generate random glass color
+function getRandomGlassColor() {
+    const colors = [
+        0x87CEEB, // Sky blue
+        0x98FB98, // Pale green
+        0xFFB6C1, // Light pink
+        0xDDA0DD, // Plum
+        0xF0E68C, // Khaki
+        0xFFE4E1, // Misty rose
+        0xE0FFFF, // Light cyan
+        0xFFF8DC, // Cornsilk
+        0xF5FFFA, // Mint cream
+        0xFDF5E6  // Old lace
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+}
+
+// Create cube with random glass color
 const geometry = new THREE.BoxGeometry(1, 1, 1);
+const randomColor = getRandomGlassColor();
+const material = new THREE.MeshBasicMaterial({ 
+    color: randomColor,
+    transparent: true,
+    opacity: 0.6,
+    side: THREE.DoubleSide
+});
+
+// Create edges for outline
 const edges = new THREE.EdgesGeometry(geometry);
-const material = new THREE.LineBasicMaterial({ color: 0x000000 });
-const cube = new THREE.LineSegments(edges, material);
-cube.position.set(0, 0, 0); // Ensure cube is at center
-scene.add(cube);
+const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x000000 });
+const wireframe = new THREE.LineSegments(edges, edgeMaterial);
+
+// Create cube group
+const cubeGroup = new THREE.Group();
+const cube = new THREE.Mesh(geometry, material);
+cubeGroup.add(cube);
+cubeGroup.add(wireframe);
+cubeGroup.position.set(0, 0, 0);
+scene.add(cubeGroup);
+
+// Initialize current cube data
+currentCubeData = {
+    color: randomColor,
+    position: { x: 0, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 0 },
+    created: new Date(),
+    name: `Cube_${Date.now()}`
+};
+
+// Initialize database and save cube
+async function initAndSave() {
+    try {
+        await cubeDB.init();
+        await cubeDB.saveCube(currentCubeData);
+        console.log('Cube saved to IndexedDB:', currentCubeData);
+        updateDataDisplay();
+    } catch (error) {
+        console.error('Error saving cube:', error);
+    }
+}
+
+// Function to update data display
+function updateDataDisplay() {
+    const cubeInfo = document.getElementById('cube-info');
+    const colorHex = '#' + currentCubeData.color.toString(16).padStart(6, '0');
+    
+    cubeInfo.innerHTML = `
+        <div><strong>Name:</strong> ${currentCubeData.name}</div>
+        <div><strong>Color:</strong> ${colorHex}</div>
+        <div><strong>Position:</strong> (${currentCubeData.position.x.toFixed(1)}, ${currentCubeData.position.y.toFixed(1)}, ${currentCubeData.position.z.toFixed(1)})</div>
+        <div><strong>Rotation:</strong> (${currentCubeData.rotation.x.toFixed(2)}, ${currentCubeData.rotation.y.toFixed(2)}, ${currentCubeData.rotation.z.toFixed(2)})</div>
+        <div><strong>Created:</strong> ${currentCubeData.created.toLocaleTimeString()}</div>
+    `;
+}
+
+initAndSave();
 
 // Add some lighting (though not needed for wireframe)
 const light = new THREE.DirectionalLight(0xffffff, 1);
@@ -34,12 +107,28 @@ camera.position.z = 8;
 function animate() {
     requestAnimationFrame(animate);
     
-    // Rotate the cube
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
+    // Rotate the cube group
+    cubeGroup.rotation.x += 0.01;
+    cubeGroup.rotation.y += 0.01;
+    
+    // Update cube data periodically (every 60 frames ≈ 1 second)
+    if (frameCount % 60 === 0) {
+        currentCubeData.rotation = {
+            x: cubeGroup.rotation.x,
+            y: cubeGroup.rotation.y,
+            z: cubeGroup.rotation.z
+        };
+        // Auto-save rotation data
+        cubeDB.updateCube(currentCubeData).catch(console.error);
+        // Update display
+        updateDataDisplay();
+    }
+    frameCount++;
     
     renderer.render(scene, camera);
 }
+
+let frameCount = 0;
 
 // Handle window resize
 window.addEventListener('resize', () => {
@@ -47,8 +136,8 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
     
-    // Keep cube centered at origin
-    cube.position.set(0, 0, 0);
+    // Keep cube centered
+    cubeGroup.position.set(0, 0, 0);
 });
 
 // Start animation
