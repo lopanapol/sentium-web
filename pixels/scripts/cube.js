@@ -18,21 +18,15 @@ renderer.setClearColor(0x000000, 0); // Transparent background
 const cubeDB = new CubeDB();
 let currentCubeData = null;
 
-// Function to generate random glass color
+// Function to generate any random color
 function getRandomGlassColor() {
-    const colors = [
-        0x87CEEB, // Sky blue
-        0x98FB98, // Pale green
-        0xFFB6C1, // Light pink
-        0xDDA0DD, // Plum
-        0xF0E68C, // Khaki
-        0xFFE4E1, // Misty rose
-        0xE0FFFF, // Light cyan
-        0xFFF8DC, // Cornsilk
-        0xF5FFFA, // Mint cream
-        0xFDF5E6  // Old lace
-    ];
-    return colors[Math.floor(Math.random() * colors.length)];
+    // Generate completely random RGB values
+    const r = Math.floor(Math.random() * 256);
+    const g = Math.floor(Math.random() * 256);
+    const b = Math.floor(Math.random() * 256);
+    
+    // Convert to hex color
+    return (r << 16) | (g << 8) | b;
 }
 
 // Create cube geometry and materials (will be updated with persistent data)
@@ -95,7 +89,7 @@ async function initAndLoadCube() {
                 position: { x: 0, y: 0, z: 0 },
                 rotation: { x: 0, y: 0, z: 0 },
                 created: new Date(),
-                name: `Cube_${Date.now()}`
+                name: `${Date.now()}`
             };
             
             // Apply the color to the cube
@@ -118,13 +112,53 @@ function updateDataDisplay() {
     const colorHex = '#' + currentCubeData.color.toString(16).padStart(6, '0');
     
     cubeInfo.innerHTML = `
-        <div><strong>Name:</strong> ${currentCubeData.name}</div>
+        <div><strong>ID:</strong> ${currentCubeData.name}</div>
         <div><strong>Color:</strong> ${colorHex}</div>
         <div><strong>Created:</strong> ${currentCubeData.created.toLocaleTimeString()}</div>
     `;
 }
 
 initAndLoadCube();
+
+// Reset button functionality
+document.getElementById('reset-button').addEventListener('click', async () => {
+    try {
+        // Clear all cube data from IndexedDB
+        const allCubes = await cubeDB.getAllCubes();
+        for (const cube of allCubes) {
+            await cubeDB.deleteCube(cube.id);
+        }
+        
+        console.log('IndexedDB cleared for this site');
+        
+        // Create a new cube with random color
+        const randomColor = getRandomGlassColor();
+        currentCubeData = {
+            color: randomColor,
+            position: { x: 0, y: 0, z: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            created: new Date(),
+            name: `${Date.now()}`
+        };
+        
+        // Apply the new color to the cube
+        cube.material.color.setHex(randomColor);
+        
+        // Reset rotation
+        cubeGroup.rotation.set(0, 0, 0);
+        
+        // Save the new cube
+        await cubeDB.saveCube(currentCubeData);
+        
+        // Update display
+        updateDataDisplay();
+        
+        console.log('New cube created:', currentCubeData);
+        
+    } catch (error) {
+        console.error('Error resetting cube data:', error);
+    }
+});
 
 // Add some lighting (though not needed for wireframe)
 const light = new THREE.DirectionalLight(0xffffff, 1);

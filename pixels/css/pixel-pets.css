@@ -64,6 +64,28 @@
   color: #E0E0E0;
 }
 
+.reset-btn {
+  background: rgba(255, 69, 69, 0.8);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  margin-top: 0.8rem;
+  transition: background 0.3s ease;
+  font-family: var(--font-family);
+}
+
+.reset-btn:hover {
+  background: rgba(255, 69, 69, 1);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.reset-btn:active {
+  background: rgba(200, 50, 50, 1);
+}
+
 /* Remove wrapper styling since canvas is now fullscreen */
 
 /* Game area styling will be added in next steps */
