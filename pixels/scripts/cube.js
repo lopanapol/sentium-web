@@ -35,11 +35,10 @@ function getRandomGlassColor() {
     return colors[Math.floor(Math.random() * colors.length)];
 }
 
-// Create cube with random glass color
+// Create cube geometry and materials (will be updated with persistent data)
 const geometry = new THREE.BoxGeometry(1, 1, 1);
-const randomColor = getRandomGlassColor();
-const material = new THREE.MeshBasicMaterial({ 
-    color: randomColor,
+let material = new THREE.MeshBasicMaterial({ 
+    color: 0x87CEEB, // Default color, will be overridden
     transparent: true,
     opacity: 0.6,
     side: THREE.DoubleSide
@@ -58,28 +57,62 @@ cubeGroup.add(wireframe);
 cubeGroup.position.set(0, 0, 0);
 scene.add(cubeGroup);
 
-// Initialize current cube data
-currentCubeData = {
-    color: randomColor,
-    position: { x: 0, y: 0, z: 0 },
-    rotation: { x: 0, y: 0, z: 0 },
-    created: new Date(),
-    name: `Cube_${Date.now()}`
-};
+// Initialize current cube data (will be loaded or created)
+currentCubeData = null;
 
-// Initialize database and save cube
-async function initAndSave() {
+// Initialize database and load/create cube
+async function initAndLoadCube() {
     try {
         await cubeDB.init();
-        await cubeDB.saveCube(currentCubeData);
-        console.log('Cube saved to IndexedDB:', currentCubeData);
+        
+        // Try to load existing cube data
+        const existingCubes = await cubeDB.getAllCubes();
+        
+        if (existingCubes.length > 0) {
+            // Load the most recent cube
+            currentCubeData = existingCubes[existingCubes.length - 1];
+            // Convert date string back to Date object if needed
+            if (typeof currentCubeData.created === 'string') {
+                currentCubeData.created = new Date(currentCubeData.created);
+            }
+            
+            // Apply the loaded color to the cube
+            cube.material.color.setHex(currentCubeData.color);
+            
+            // Apply loaded rotation if exists
+            if (currentCubeData.rotation) {
+                cubeGroup.rotation.x = currentCubeData.rotation.x;
+                cubeGroup.rotation.y = currentCubeData.rotation.y;
+                cubeGroup.rotation.z = currentCubeData.rotation.z;
+            }
+            
+            console.log('Loaded existing cube from IndexedDB:', currentCubeData);
+        } else {
+            // No existing cube, create new one with random color
+            const randomColor = getRandomGlassColor();
+            currentCubeData = {
+                color: randomColor,
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                created: new Date(),
+                name: `Cube_${Date.now()}`
+            };
+            
+            // Apply the color to the cube
+            cube.material.color.setHex(randomColor);
+            
+            // Save the new cube
+            await cubeDB.saveCube(currentCubeData);
+            console.log('Created new cube and saved to IndexedDB:', currentCubeData);
+        }
+        
         updateDataDisplay();
     } catch (error) {
-        console.error('Error saving cube:', error);
+        console.error('Error loading/saving cube:', error);
     }
 }
 
-// Function to update data display
+// Function to update data display (without position and rotation)
 function updateDataDisplay() {
     const cubeInfo = document.getElementById('cube-info');
     const colorHex = '#' + currentCubeData.color.toString(16).padStart(6, '0');
@@ -87,13 +120,11 @@ function updateDataDisplay() {
     cubeInfo.innerHTML = `
         <div><strong>Name:</strong> ${currentCubeData.name}</div>
         <div><strong>Color:</strong> ${colorHex}</div>
-        <div><strong>Position:</strong> (${currentCubeData.position.x.toFixed(1)}, ${currentCubeData.position.y.toFixed(1)}, ${currentCubeData.position.z.toFixed(1)})</div>
-        <div><strong>Rotation:</strong> (${currentCubeData.rotation.x.toFixed(2)}, ${currentCubeData.rotation.y.toFixed(2)}, ${currentCubeData.rotation.z.toFixed(2)})</div>
         <div><strong>Created:</strong> ${currentCubeData.created.toLocaleTimeString()}</div>
     `;
 }
 
-initAndSave();
+initAndLoadCube();
 
 // Add some lighting (though not needed for wireframe)
 const light = new THREE.DirectionalLight(0xffffff, 1);
