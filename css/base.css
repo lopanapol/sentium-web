@@ -2,7 +2,7 @@
   --color-bg: #2fffdc;
   --color-text-main: white;
   --color-text-header: black;
-  --color-primary: #ff00e6;
+  --color-primary: #df2bff;
   --wrapper-height: 87vh;
   --image-max-width: 300px;
   --image-margin: 3rem;
@@ -39,6 +39,12 @@ body {
   overflow-x: hidden; /* Prevent horizontal scroll */
   overflow-y: auto; /* Allow vertical scroll when needed */
   min-height: 100vh; /* Ensure full viewport height */
+}
+
+#body_0 {
+  h1, h2, h3 {
+    line-height: 1em;
+  }
 }
 
 * {
