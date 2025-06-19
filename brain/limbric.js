@@ -318,13 +318,39 @@ async function connectToSentiumServer() {
     const skipLocalAttempt = params.get('skipLocal') === 'true';
     const customServerUrl = params.get('server');
     
+    // If we're on HTTPS in production and not forced to try local, skip local server attempts
+    const isHttps = window.location.protocol === 'https:';
+    const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+    const hasCorsIssues = isHttps && isProduction;
+    
+    if (hasCorsIssues && !forceLocalMode && !customServerUrl) {
+      console.log('🔒 Running on HTTPS in production - skipping local server attempts to avoid CORS errors');
+      console.log('💡 Use ?local=true to force local server connection attempt');
+      
+      // Skip to remote API attempt (which is the code at the end of this function)
+      // Don't return here, just skip the local connection attempts
+    } else {
+      // Try to connect to local server first (unless explicitly skipped)
+      if (!skipLocalAttempt) {
+        try {
+          // Check if local server is available
+          const connected = await connectToLocalSentiumServer();
+          if (connected) {
+            return true;
+          }
+        } catch (localError) {
+          console.log('Could not connect to local server, falling back to remote API:', localError);
+        }
+      }
+    }
+    
     // If we're on GitHub Pages or sentium.dev, try to connect to local Sentium server first
     const isGitHubPages = window.location.hostname.includes('github.io') || 
                          window.location.hostname.includes('lopanapol.github.io');
     const isSentiumDev = window.location.hostname === 'sentium.dev' || 
                          window.location.hostname.includes('sentium');
     
-    if (isGitHubPages || isSentiumDev || forceLocalMode) {
+    if ((isGitHubPages || isSentiumDev || forceLocalMode) && !hasCorsIssues) {
       console.log(`${isGitHubPages ? 'GitHub Pages' : (isSentiumDev ? 'Sentium.dev' : 'Local mode')} detected - attempting local connection`);
       
       // Create a visual indicator for users when trying to connect to local server

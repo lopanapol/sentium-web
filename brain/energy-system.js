@@ -15,10 +15,55 @@ window.noeEnergy = {
 window.localConnection = {
   isConnected: false,
   serverUrl: 'http://localhost:3000/api/pixel',
+  serverAvailable: null, // Cache server availability check
+  
+  // Quick check if server is likely available without making CORS requests
+  isServerLikelyAvailable: async function() {
+    // Return cached result if we have one
+    if (this.serverAvailable !== null) {
+      return this.serverAvailable;
+    }
+    
+    // Check if we're running locally - if so, assume server could be available
+    const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocalHost) {
+      this.serverAvailable = true;
+      return true;
+    }
+    
+    // Check URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const forceLocal = urlParams.get('local') === 'true';
+    if (forceLocal) {
+      this.serverAvailable = true;
+      return true;
+    }
+    
+    // If we're on HTTPS in production, assume no local server available unless forced
+    const isHttps = window.location.protocol === 'https:';
+    const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+    if (isHttps && isProduction) {
+      console.log('🔒 Running on HTTPS in production - local server connections not attempted by default');
+      console.log('💡 Use ?local=true to force connection attempt if you have a local server with CORS enabled');
+      this.serverAvailable = false;
+      return false;
+    }
+    
+    // For other cases, assume server might be available
+    this.serverAvailable = true;
+    return true;
+  },
   
   // Attempt connection to local server
   connect: async function() {
     if (this.isConnected) return true;
+    
+    // First check if server is likely available
+    const serverLikelyAvailable = await this.isServerLikelyAvailable();
+    if (!serverLikelyAvailable) {
+      console.log('⚡ Energy system: Local server not available - running in standalone mode');
+      return false;
+    }
     
     // Check URL parameters for CORS bypass options
     const urlParams = new URLSearchParams(window.location.search);
@@ -47,6 +92,7 @@ window.localConnection = {
       // Skip connection attempt unless forced
       if (!forceLocal) {
         console.log('Skipping connection attempt due to CORS restrictions. Use ?local=true to force attempt.');
+        this.serverAvailable = false; // Update cache
         return false;
       }
     }

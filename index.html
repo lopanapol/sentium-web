@@ -114,32 +114,32 @@
         // Function to check if server is available
         async function checkServerAvailability() {
           try {
-            const serverUrls = [
-              'http://localhost:3000/api/pixel',
-              'http://localhost:3000/api/health',
-              'http://localhost:3000/health',
-              'http://localhost:3000/'
-            ];
+            // Use the same logic as energy-system.js to avoid CORS errors
             
-            for (const url of serverUrls) {
-              try {
-                const response = await fetch(url, {
-                  method: 'GET',
-                  mode: 'cors',
-                  cache: 'no-cache',
-                  timeout: 2000
-                });
-                
-                // If we get any response (even 404), server is running
-                if (response) {
-                  return true;
-                }
-              } catch (error) {
-                // Continue to next URL
-                continue;
-              }
+            // Check if we're running locally - if so, assume server could be available
+            const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (isLocalHost) {
+              return true;
             }
-            return false;
+            
+            // Check URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const forceLocal = urlParams.get('local') === 'true';
+            if (forceLocal) {
+              return true;
+            }
+            
+            // If we're on HTTPS in production, assume no local server available unless forced
+            const isHttps = window.location.protocol === 'https:';
+            const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+            if (isHttps && isProduction) {
+              console.log('Server availability check: Running on HTTPS in production - assuming no local server');
+              return false;
+            }
+            
+            // For other cases, we could try a quick test but to avoid CORS errors, 
+            // we'll assume server might be available
+            return true;
           } catch (error) {
             return false;
           }
