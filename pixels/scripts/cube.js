@@ -513,8 +513,132 @@ canvas.addEventListener('mousemove', onMouseMove);
 canvas.addEventListener('mouseenter', onMouseEnter);
 canvas.addEventListener('mouseleave', onMouseLeave);
 
-// Set cursor style
-canvas.style.cursor = 'crosshair';
+// Set enhanced cursor style with visibility improvements
+canvas.style.cursor = 'none'; // Hide default cursor to replace with custom one
+
+// Create custom visible cursor
+const createCustomCursor = () => {
+    // Remove existing custom cursor if any
+    const existingCursor = document.getElementById('custom-cursor');
+    if (existingCursor) existingCursor.remove();
+    
+    // Create custom cursor element
+    const customCursor = document.createElement('div');
+    customCursor.id = 'custom-cursor';
+    customCursor.style.cssText = `
+        position: fixed;
+        width: 20px;
+        height: 20px;
+        background: radial-gradient(circle, rgba(255,105,180,0.9) 0%, rgba(255,20,147,0.7) 50%, rgba(255,105,180,0.3) 100%);
+        border: 2px solid rgba(255,20,147,0.8);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 10000;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 15px rgba(255,20,147,0.6), inset 0 0 10px rgba(255,105,180,0.4);
+        transition: all 0.05s ease;
+        mix-blend-mode: normal;
+    `;
+    document.body.appendChild(customCursor);
+    
+    // Update cursor position and responsiveness on mouse move
+    const updateCursorPosition = (e) => {
+        customCursor.style.left = e.clientX + 'px';
+        customCursor.style.top = e.clientY + 'px';
+        
+        // Calculate distance from cube for dynamic effects
+        const rect = canvas.getBoundingClientRect();
+        const mouseCanvasX = (e.clientX - rect.left) / rect.width * 2 - 1;
+        const mouseCanvasY = -((e.clientY - rect.top) / rect.height * 2 - 1);
+        const distanceFromCube = Math.sqrt(mouseCanvasX * mouseCanvasX + mouseCanvasY * mouseCanvasY);
+        
+        // Highly responsive cursor states based on cube interaction
+        if (consciousness.interest > 0.8) {
+            // Very high interest - cursor pulses and grows
+            customCursor.style.transform = 'translate(-50%, -50%) scale(1.5)';
+            customCursor.style.background = 'radial-gradient(circle, rgba(255,20,147,1) 0%, rgba(255,105,180,0.9) 50%, rgba(255,20,147,0.5) 100%)';
+            customCursor.style.boxShadow = '0 0 30px rgba(255,20,147,0.9), inset 0 0 15px rgba(255,105,180,0.7), 0 0 50px rgba(255,20,147,0.4)';
+            customCursor.style.border = '3px solid rgba(255,20,147,1)';
+        } else if (consciousness.interest > 0.5) {
+            // High interest - cursor grows and brightens
+            customCursor.style.transform = 'translate(-50%, -50%) scale(1.3)';
+            customCursor.style.background = 'radial-gradient(circle, rgba(255,20,147,0.95) 0%, rgba(255,105,180,0.8) 50%, rgba(255,20,147,0.4) 100%)';
+            customCursor.style.boxShadow = '0 0 25px rgba(255,20,147,0.8), inset 0 0 12px rgba(255,105,180,0.6)';
+            customCursor.style.border = '2px solid rgba(255,20,147,0.9)';
+        } else if (consciousness.interest > 0.2) {
+            // Medium interest - subtle glow
+            customCursor.style.transform = 'translate(-50%, -50%) scale(1.1)';
+            customCursor.style.background = 'radial-gradient(circle, rgba(255,105,180,0.9) 0%, rgba(255,20,147,0.7) 50%, rgba(255,105,180,0.3) 100%)';
+            customCursor.style.boxShadow = '0 0 20px rgba(255,20,147,0.7), inset 0 0 10px rgba(255,105,180,0.5)';
+            customCursor.style.border = '2px solid rgba(255,20,147,0.8)';
+        } else {
+            // Low/no interest - normal state
+            customCursor.style.transform = 'translate(-50%, -50%) scale(1)';
+            customCursor.style.background = 'radial-gradient(circle, rgba(255,105,180,0.9) 0%, rgba(255,20,147,0.7) 50%, rgba(255,105,180,0.3) 100%)';
+            customCursor.style.boxShadow = '0 0 15px rgba(255,20,147,0.6), inset 0 0 10px rgba(255,105,180,0.4)';
+            customCursor.style.border = '2px solid rgba(255,20,147,0.8)';
+        }
+        
+        // Add distance-based effects
+        if (distanceFromCube < 0.3) {
+            // Very close to cube - intense interaction
+            customCursor.style.width = '25px';
+            customCursor.style.height = '25px';
+            customCursor.style.filter = 'brightness(1.2) saturate(1.3)';
+        } else if (distanceFromCube < 0.6) {
+            // Close to cube - moderate interaction
+            customCursor.style.width = '22px';
+            customCursor.style.height = '22px';
+            customCursor.style.filter = 'brightness(1.1) saturate(1.1)';
+        } else {
+            // Far from cube - normal state
+            customCursor.style.width = '20px';
+            customCursor.style.height = '20px';
+            customCursor.style.filter = 'brightness(1) saturate(1)';
+        }
+        
+        // Add cube state-based cursor effects
+        if (cubeState === 'excited') {
+            customCursor.style.animation = 'pulse 0.3s ease-in-out infinite alternate';
+        } else if (cubeState === 'happy') {
+            customCursor.style.animation = 'pulse 0.6s ease-in-out infinite alternate';
+        } else {
+            customCursor.style.animation = 'none';
+        }
+    };
+    
+    // Add mouse listeners for cursor
+    document.addEventListener('mousemove', updateCursorPosition);
+    
+    // Hide custom cursor when leaving canvas
+    canvas.addEventListener('mouseleave', () => {
+        customCursor.style.opacity = '0';
+    });
+    
+    canvas.addEventListener('mouseenter', () => {
+        customCursor.style.opacity = '1';
+    });
+};
+
+// Initialize custom cursor
+createCustomCursor();
+
+// Add pulse animation CSS
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes pulse {
+        0% { 
+            transform: translate(-50%, -50%) scale(1); 
+            opacity: 0.9; 
+        }
+        100% { 
+            transform: translate(-50%, -50%) scale(1.1); 
+            opacity: 1; 
+            filter: brightness(1.3) saturate(1.4);
+        }
+    }
+`;
+document.head.appendChild(style);
 
 // Animation loop with consciousness
 function animate() {
