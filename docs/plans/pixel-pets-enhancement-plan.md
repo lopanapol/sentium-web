@@ -20,14 +20,14 @@ Enhancement plan for the `/pixels` directory to make the pixel pets system more 
 - [X] Pulsing/breathing animations for more lifelike feel
 - [X] Smooth transitions between emotional states
 - [X] Glow effects based on energy levels
-- [ ] Trailing effects when pet moves quickly *(logic implemented, visual rendering TODO)*
+- [ ] Trailing effects when pet moves quickly
 
-### 1.2 Particle Effects
+### 1.2 Color Effects
 
-- [X] **Happy/Excited States**: Sparkles, hearts, stars emanating from pet
-- [X] **Sad States**: Rain drops or dark particles
-- [X] **Playful States**: Colorful confetti bursts
-- [X] **Contact Effects**: Interactive particles on mouse/touch contact
+- [ ] **Happy/Excited States**
+- [ ] **Sad States**
+- [ ] **Playful States**
+- [ ] **Contact Effects**
 
 ### 1.3 Dynamic Shapes
 
@@ -41,17 +41,17 @@ Enhancement plan for the `/pixels` directory to make the pixel pets system more 
 
 ### 2.1 User Interactions 
 
-- [X] Implement pet reactions to mouse cursor proximity:
-  - [X] **Excitement**: Color changes and attention increase when cursor appears
-  - [X] **Curiosity**: Pet "notices" and watches cursor movement
-  - [X] **Following**: Pet follows cursor with excitement and playful behavior
+- [ ] Implement pet reactions to mouse cursor proximity:
+  - [ ] **Excitement**: Color changes and attention increase when cursor appears
+  - [ ] **Curiosity**: Pet "notices" and watches cursor movement
+  - [ ] **Following**: Pet follows cursor with excitement and playful behavior
 - [ ] Create feeding/care interactions that affect pet mood and appearance *(TODO)*
 - [ ] Add day/night cycles that change pet behavior patterns *(TODO)*
 
 ### 2.2 Pet Personalities 
 
-- [X] Basic personality system with curiosity, shyness, playfulness traits
-- [X] Emotional state system (idle, curious, shy, playful, excited)
+- [ ] Basic personality system with curiosity, shyness, playfulness traits
+- [ ] Emotional state system (idle, curious, shy, playful, excited)
 - [ ] **Bouncy**: Quick, erratic movements with frequent direction changes *(TODO)*
 - [ ] **Lazy**: Slow, minimal movement with long idle periods *(TODO)*
 - [ ] **Curious**: Attracted to mouse cursor and screen edges *(basic cursor attraction implemented)*
