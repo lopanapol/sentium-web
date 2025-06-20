@@ -546,64 +546,112 @@ const createCustomCursor = () => {
         customCursor.style.left = e.clientX + 'px';
         customCursor.style.top = e.clientY + 'px';
         
-        // Calculate distance from cube for dynamic effects
+        // Get actual cube position in screen coordinates
+        const vector = new THREE.Vector3();
+        cubeGroup.getWorldPosition(vector);
+        vector.project(camera);
+        
+        // Convert cube's 3D position to screen coordinates
         const rect = canvas.getBoundingClientRect();
+        const cubeScreenX = (vector.x * 0.5 + 0.5) * rect.width + rect.left;
+        const cubeScreenY = (vector.y * -0.5 + 0.5) * rect.height + rect.top;
+        
+        // Calculate actual distance from cursor to cube in screen pixels
+        const dx = e.clientX - cubeScreenX;
+        const dy = e.clientY - cubeScreenY;
+        const pixelDistance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Contact detection based on cube size (approximately 30-40 pixels)
+        const cubeRadius = 35; // Adjust this based on cube's visual size
+        const isContactingCube = pixelDistance < cubeRadius;
+        
+        // Also calculate normalized distance for other effects
         const mouseCanvasX = (e.clientX - rect.left) / rect.width * 2 - 1;
         const mouseCanvasY = -((e.clientY - rect.top) / rect.height * 2 - 1);
-        const distanceFromCube = Math.sqrt(mouseCanvasX * mouseCanvasX + mouseCanvasY * mouseCanvasY);
+        const normalizedDistance = Math.sqrt(mouseCanvasX * mouseCanvasX + mouseCanvasY * mouseCanvasY);
         
-        // Highly responsive cursor states based on cube interaction
-        if (consciousness.interest > 0.8) {
-            // Very high interest - cursor pulses and grows
-            customCursor.style.transform = 'translate(-50%, -50%) scale(1.5)';
-            customCursor.style.background = 'radial-gradient(circle, rgba(255,20,147,1) 0%, rgba(255,105,180,0.9) 50%, rgba(255,20,147,0.5) 100%)';
-            customCursor.style.boxShadow = '0 0 30px rgba(255,20,147,0.9), inset 0 0 15px rgba(255,105,180,0.7), 0 0 50px rgba(255,20,147,0.4)';
-            customCursor.style.border = '3px solid rgba(255,20,147,1)';
-        } else if (consciousness.interest > 0.5) {
-            // High interest - cursor grows and brightens
-            customCursor.style.transform = 'translate(-50%, -50%) scale(1.3)';
-            customCursor.style.background = 'radial-gradient(circle, rgba(255,20,147,0.95) 0%, rgba(255,105,180,0.8) 50%, rgba(255,20,147,0.4) 100%)';
-            customCursor.style.boxShadow = '0 0 25px rgba(255,20,147,0.8), inset 0 0 12px rgba(255,105,180,0.6)';
-            customCursor.style.border = '2px solid rgba(255,20,147,0.9)';
-        } else if (consciousness.interest > 0.2) {
-            // Medium interest - subtle glow
-            customCursor.style.transform = 'translate(-50%, -50%) scale(1.1)';
-            customCursor.style.background = 'radial-gradient(circle, rgba(255,105,180,0.9) 0%, rgba(255,20,147,0.7) 50%, rgba(255,105,180,0.3) 100%)';
-            customCursor.style.boxShadow = '0 0 20px rgba(255,20,147,0.7), inset 0 0 10px rgba(255,105,180,0.5)';
-            customCursor.style.border = '2px solid rgba(255,20,147,0.8)';
+        if (isContactingCube) {
+            // CONTACT EFFECTS - Cursor is actually touching the cube!
+            customCursor.style.transform = 'translate(-50%, -50%) scale(2)';
+            customCursor.style.background = 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,20,147,1) 30%, rgba(255,105,180,0.8) 70%, rgba(255,20,147,0.3) 100%)';
+            customCursor.style.boxShadow = `
+                0 0 40px rgba(255,20,147,1), 
+                0 0 80px rgba(255,105,180,0.7),
+                inset 0 0 20px rgba(255,255,255,0.8),
+                0 0 120px rgba(255,20,147,0.5)
+            `;
+            customCursor.style.border = '4px solid rgba(255,255,255,1)';
+            customCursor.style.filter = 'brightness(1.5) saturate(2) blur(0.5px)';
+            customCursor.style.animation = 'contactPulse 0.2s ease-in-out infinite alternate';
+            customCursor.style.width = '30px';
+            customCursor.style.height = '30px';
+            
+            // Trigger cube contact reaction (with proper positioning)
+            if (!cubeGroup.userData.lastContactTime || Date.now() - cubeGroup.userData.lastContactTime > 500) {
+                triggerCubeContactEffect(cubeScreenX, cubeScreenY);
+                cubeGroup.userData.lastContactTime = Date.now();
+            }
+            
+            // Boost cube's happiness from contact
+            cubePersonality.mood = Math.min(cubePersonality.mood + 0.05, 1.0);
+            consciousness.interest = 1.0;
+            cubePersonality.attention = 1.0;
+            
         } else {
-            // Low/no interest - normal state
-            customCursor.style.transform = 'translate(-50%, -50%) scale(1)';
-            customCursor.style.background = 'radial-gradient(circle, rgba(255,105,180,0.9) 0%, rgba(255,20,147,0.7) 50%, rgba(255,105,180,0.3) 100%)';
-            customCursor.style.boxShadow = '0 0 15px rgba(255,20,147,0.6), inset 0 0 10px rgba(255,105,180,0.4)';
-            customCursor.style.border = '2px solid rgba(255,20,147,0.8)';
-        }
-        
-        // Add distance-based effects
-        if (distanceFromCube < 0.3) {
-            // Very close to cube - intense interaction
-            customCursor.style.width = '25px';
-            customCursor.style.height = '25px';
-            customCursor.style.filter = 'brightness(1.2) saturate(1.3)';
-        } else if (distanceFromCube < 0.6) {
-            // Close to cube - moderate interaction
-            customCursor.style.width = '22px';
-            customCursor.style.height = '22px';
-            customCursor.style.filter = 'brightness(1.1) saturate(1.1)';
-        } else {
-            // Far from cube - normal state
-            customCursor.style.width = '20px';
-            customCursor.style.height = '20px';
-            customCursor.style.filter = 'brightness(1) saturate(1)';
-        }
-        
-        // Add cube state-based cursor effects
-        if (cubeState === 'excited') {
-            customCursor.style.animation = 'pulse 0.3s ease-in-out infinite alternate';
-        } else if (cubeState === 'happy') {
-            customCursor.style.animation = 'pulse 0.6s ease-in-out infinite alternate';
-        } else {
-            customCursor.style.animation = 'none';
+            // Normal interaction states when not in contact
+            if (consciousness.interest > 0.8) {
+                // Very high interest - cursor pulses and grows
+                customCursor.style.transform = 'translate(-50%, -50%) scale(1.5)';
+                customCursor.style.background = 'radial-gradient(circle, rgba(255,20,147,1) 0%, rgba(255,105,180,0.9) 50%, rgba(255,20,147,0.5) 100%)';
+                customCursor.style.boxShadow = '0 0 30px rgba(255,20,147,0.9), inset 0 0 15px rgba(255,105,180,0.7), 0 0 50px rgba(255,20,147,0.4)';
+                customCursor.style.border = '3px solid rgba(255,20,147,1)';
+                customCursor.style.filter = 'brightness(1.2) saturate(1.3)';
+            } else if (consciousness.interest > 0.5) {
+                // High interest - cursor grows and brightens
+                customCursor.style.transform = 'translate(-50%, -50%) scale(1.3)';
+                customCursor.style.background = 'radial-gradient(circle, rgba(255,20,147,0.95) 0%, rgba(255,105,180,0.8) 50%, rgba(255,20,147,0.4) 100%)';
+                customCursor.style.boxShadow = '0 0 25px rgba(255,20,147,0.8), inset 0 0 12px rgba(255,105,180,0.6)';
+                customCursor.style.border = '2px solid rgba(255,20,147,0.9)';
+                customCursor.style.filter = 'brightness(1.1) saturate(1.1)';
+            } else if (consciousness.interest > 0.2) {
+                // Medium interest - subtle glow
+                customCursor.style.transform = 'translate(-50%, -50%) scale(1.1)';
+                customCursor.style.background = 'radial-gradient(circle, rgba(255,105,180,0.9) 0%, rgba(255,20,147,0.7) 50%, rgba(255,105,180,0.3) 100%)';
+                customCursor.style.boxShadow = '0 0 20px rgba(255,20,147,0.7), inset 0 0 10px rgba(255,105,180,0.5)';
+                customCursor.style.border = '2px solid rgba(255,20,147,0.8)';
+                customCursor.style.filter = 'brightness(1) saturate(1)';
+            } else {
+                // Low/no interest - normal state
+                customCursor.style.transform = 'translate(-50%, -50%) scale(1)';
+                customCursor.style.background = 'radial-gradient(circle, rgba(255,105,180,0.9) 0%, rgba(255,20,147,0.7) 50%, rgba(255,105,180,0.3) 100%)';
+                customCursor.style.boxShadow = '0 0 15px rgba(255,20,147,0.6), inset 0 0 10px rgba(255,105,180,0.4)';
+                customCursor.style.border = '2px solid rgba(255,20,147,0.8)';
+                customCursor.style.filter = 'brightness(1) saturate(1)';
+            }
+            
+            // Add distance-based effects (only when not in contact)
+            if (pixelDistance < 50) {
+                // Very close to cube - intense interaction
+                customCursor.style.width = '25px';
+                customCursor.style.height = '25px';
+            } else if (pixelDistance < 100) {
+                // Close to cube - moderate interaction
+                customCursor.style.width = '22px';
+                customCursor.style.height = '22px';
+            } else {
+                // Far from cube - normal state
+                customCursor.style.width = '20px';
+                customCursor.style.height = '20px';
+            }
+            
+            // Add cube state-based cursor effects
+            if (cubeState === 'excited') {
+                customCursor.style.animation = 'pulse 0.3s ease-in-out infinite alternate';
+            } else if (cubeState === 'happy') {
+                customCursor.style.animation = 'pulse 0.6s ease-in-out infinite alternate';
+            } else {
+                customCursor.style.animation = 'none';
+            }
         }
     };
     
@@ -623,7 +671,82 @@ const createCustomCursor = () => {
 // Initialize custom cursor
 createCustomCursor();
 
-// Add pulse animation CSS
+// Cube contact effect function
+const triggerCubeContactEffect = (cubeScreenX = window.innerWidth / 2, cubeScreenY = window.innerHeight / 2) => {
+    // Visual burst effect on cube
+    cubeGroup.scale.setScalar(1.3);
+    setTimeout(() => {
+        cubeGroup.scale.setScalar(1.0);
+    }, 200);
+    
+    // Change cube color temporarily to show happiness
+    const originalColor = cube.material.color.getHex();
+    cube.material.color.setHex(0xffff00); // Bright yellow when touched
+    setTimeout(() => {
+        cube.material.color.setHex(originalColor);
+    }, 300);
+    
+    // Create contact particle effect at cube's actual position
+    createContactParticles(cubeScreenX, cubeScreenY);
+    
+    // Cube emotional response to being touched
+    cubeState = 'excited';
+    cubePersonality.mood = 1.0;
+    consciousness.interest = 1.0;
+    
+    // Add haptic-like visual feedback
+    document.body.style.filter = 'brightness(1.1)';
+    setTimeout(() => {
+        document.body.style.filter = 'brightness(1.0)';
+    }, 100);
+};
+
+// Create particle effect when cursor contacts cube
+const createContactParticles = (cubeScreenX = window.innerWidth / 2, cubeScreenY = window.innerHeight / 2) => {
+    for (let i = 0; i < 8; i++) {
+        const particle = document.createElement('div');
+        particle.style.cssText = `
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,20,147,0.8) 100%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            left: ${cubeScreenX}px;
+            top: ${cubeScreenY}px;
+            transform: translate(-50%, -50%);
+        `;
+        document.body.appendChild(particle);
+        
+        // Animate particles outward from cube's actual position
+        const angle = (i / 8) * Math.PI * 2;
+        const distance = 50 + Math.random() * 30;
+        const duration = 0.8 + Math.random() * 0.4;
+        
+        particle.animate([
+            { 
+                transform: 'translate(-50%, -50%) scale(1)',
+                opacity: 1,
+                left: `${cubeScreenX}px`,
+                top: `${cubeScreenY}px`
+            },
+            { 
+                transform: 'translate(-50%, -50%) scale(0.2)',
+                opacity: 0,
+                left: `${cubeScreenX + Math.cos(angle) * distance}px`,
+                top: `${cubeScreenY + Math.sin(angle) * distance}px`
+            }
+        ], {
+            duration: duration * 1000,
+            easing: 'ease-out'
+        }).addEventListener('finish', () => {
+            particle.remove();
+        });
+    }
+};
+
+// Add contact pulse animation CSS
 const style = document.createElement('style');
 style.textContent = `
     @keyframes pulse {
@@ -635,6 +758,19 @@ style.textContent = `
             transform: translate(-50%, -50%) scale(1.1); 
             opacity: 1; 
             filter: brightness(1.3) saturate(1.4);
+        }
+    }
+    
+    @keyframes contactPulse {
+        0% { 
+            transform: translate(-50%, -50%) scale(2); 
+            opacity: 0.8;
+            filter: brightness(1.5) saturate(2) blur(0.5px);
+        }
+        100% { 
+            transform: translate(-50%, -50%) scale(2.2); 
+            opacity: 1;
+            filter: brightness(2) saturate(2.5) blur(1px);
         }
     }
 `;
