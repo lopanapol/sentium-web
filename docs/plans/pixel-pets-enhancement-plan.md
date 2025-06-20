@@ -14,9 +14,9 @@ Enhancement plan for the `/pixels` directory to make the pixel pets system more 
 - [x] Trailing effects when pet moves quickly
 
 ### 1.2 Particle Effects
-- [ ] **Happy/Excited States**: Sparkles, hearts, stars emanating from pet
-- [ ] **Sad States**: Rain drops or dark particles
-- [ ] **Playful States**: Colorful confetti bursts
+- [x] **Happy/Excited States**: Sparkles, hearts, stars emanating from pet
+- [x] **Sad States**: Rain drops or dark particles
+- [x] **Playful States**: Colorful confetti bursts
 
 ### 1.3 Dynamic Shapes
 - [ ] Morphing cube shapes based on emotions:
