@@ -49,10 +49,42 @@ function getWhiteColor() {
     return 0xffffff;
 }
 
-// Create cube geometry and materials (will be updated with persistent data)
+// Function to get color based on emotional state
+function getEmotionalColor(mood, state) {
+    // Base colors for different emotional states
+    const emotionalColors = {
+        happy: 0x00ff88,      // Bright green
+        content: 0x88ff00,    // Light green  
+        neutral: 0xffffff,    // White
+        sad: 0x4488ff,        // Blue
+        anxious: 0xff4444,    // Red
+        curious: 0xffaa00,    // Orange
+        shy: 0xaa88ff,        // Light purple
+        playful: 0xff00ff,    // Magenta
+        excited: 0xffff00     // Yellow
+    };
+    
+    // Determine primary emotion based on mood value
+    let primaryEmotion;
+    if (mood > 0.8) primaryEmotion = 'happy';
+    else if (mood > 0.6) primaryEmotion = 'content';
+    else if (mood > 0.4) primaryEmotion = 'neutral';
+    else if (mood > 0.2) primaryEmotion = 'sad';
+    else primaryEmotion = 'anxious';
+    
+    // Override with state-specific colors if in special states
+    if (state === 'curious') primaryEmotion = 'curious';
+    else if (state === 'shy') primaryEmotion = 'shy';
+    else if (state === 'playful') primaryEmotion = 'playful';
+    else if (state === 'excited') primaryEmotion = 'excited';
+    
+    return emotionalColors[primaryEmotion] || emotionalColors.neutral;
+}
+
+// Create cube geometry and materials (color will be set based on emotions)
 const geometry = new THREE.BoxGeometry(1, 1, 1);
 let material = new THREE.MeshBasicMaterial({ 
-    color: 0xffffff, // White default color
+    color: 0xffffff, // Initial white, will be updated by emotions
     transparent: true,
     opacity: 0.6,
     side: THREE.DoubleSide
@@ -109,9 +141,10 @@ async function initAndLoadCube() {
                 currentCubeData.created = new Date(currentCubeData.created);
             }
             
-            // Always set cube to white (remove color loading)
-            cube.material.color.setHex(0xffffff);
-            updateEdgeColor(0xffffff);
+            // Set cube color based on initial emotional state
+            const initialColor = getEmotionalColor(cubePersonality.mood, cubeState);
+            cube.material.color.setHex(initialColor);
+            updateEdgeColor(initialColor);
             
             // Apply loaded rotation if exists
             if (currentCubeData.rotation) {
@@ -122,7 +155,7 @@ async function initAndLoadCube() {
             
             console.log('Loaded existing cube from IndexedDB:', currentCubeData);
         } else {
-            // No existing cube, create new one with white color
+            // No existing cube, create new one with emotional color
             currentCubeData = {
                 position: { x: 0, y: 0, z: 0 },
                 rotation: { x: 0, y: 0, z: 0 },
@@ -130,9 +163,10 @@ async function initAndLoadCube() {
                 name: `${Date.now()}`
             };
             
-            // Apply white color to the cube
-            cube.material.color.setHex(0xffffff);
-            updateEdgeColor(0xffffff);
+            // Apply emotional color to the cube
+            const initialColor = getEmotionalColor(cubePersonality.mood, cubeState);
+            cube.material.color.setHex(initialColor);
+            updateEdgeColor(initialColor);
             
             // Save the new cube
             await cubeDB.saveCube(currentCubeData);
@@ -191,7 +225,7 @@ document.getElementById('reset-button').addEventListener('click', async () => {
         
         console.log('IndexedDB cleared for this site');
         
-        // Create a new cube with white color
+        // Create a new cube with emotional color
         currentCubeData = {
             position: { x: 0, y: 0, z: 0 },
             rotation: { x: 0, y: 0, z: 0 },
@@ -199,9 +233,10 @@ document.getElementById('reset-button').addEventListener('click', async () => {
             name: `${Date.now()}`
         };
         
-        // Apply white color to the cube
-        cube.material.color.setHex(0xffffff);
-        updateEdgeColor(0xffffff);
+        // Apply emotional color to the cube
+        const initialColor = getEmotionalColor(cubePersonality.mood, cubeState);
+        cube.material.color.setHex(initialColor);
+        updateEdgeColor(initialColor);
         
         // Reset rotation
         cubeGroup.rotation.set(0, 0, 0);
@@ -353,9 +388,14 @@ function updateConsciousBehavior() {
             break;
     }
     
-    // Update cube mood affects opacity
+    // Update cube mood affects opacity and color
     const moodOpacity = 0.4 + cubePersonality.mood * 0.4;
     cube.material.opacity = moodOpacity;
+    
+    // Update cube color based on emotional state
+    const currentEmotionalColor = getEmotionalColor(cubePersonality.mood, cubeState);
+    cube.material.color.setHex(currentEmotionalColor);
+    updateEdgeColor(currentEmotionalColor);
 }
 
 // Event listeners
