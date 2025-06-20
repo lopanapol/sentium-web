@@ -79,7 +79,7 @@
 }
 
 .reset-btn:hover {
-  background: var(--gradient-bottom);
+  background: white;
   border-color: rgba(255, 255, 255, 0.5);
 }
 
