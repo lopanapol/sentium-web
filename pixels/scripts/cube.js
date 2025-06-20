@@ -36,6 +36,7 @@ let cubeState = 'idle'; // idle, curious, shy, playful, excited
 let targetPosition = new THREE.Vector3(0, 0, 0);
 let targetRotationSpeed = 0.01;
 let currentRotationSpeed = 0.01;
+let velocity = new THREE.Vector2(0, 0); // Add velocity for smoother movement
 let consciousness = {
     focus: new THREE.Vector2(0, 0),
     interest: 0,
@@ -317,7 +318,7 @@ function updateConsciousBehavior() {
             const approachY = mouse.y * maxY * 0.7 + Math.cos(time * 1.5) * (maxY * 0.3);
             targetPosition.x = Math.max(-maxX, Math.min(maxX, approachX));
             targetPosition.y = Math.max(-maxY, Math.min(maxY, approachY));
-            targetRotationSpeed = 0.02 + consciousness.interest * 0.01;
+            targetRotationSpeed = 0.01 + consciousness.interest * 0.005; // Reduced from 0.02 and 0.01
             cubePersonality.mood = Math.min(cubePersonality.mood + 0.005, 1.0);
             break;
             
@@ -327,7 +328,7 @@ function updateConsciousBehavior() {
             const avoidY = -mouse.y * maxY * 0.8 + Math.cos(time) * (maxY * 0.2);
             targetPosition.x = Math.max(-maxX, Math.min(maxX, avoidX));
             targetPosition.y = Math.max(-maxY, Math.min(maxY, avoidY));
-            targetRotationSpeed = 0.005;
+            targetRotationSpeed = 0.003; // Reduced from 0.005
             cubePersonality.mood = Math.max(cubePersonality.mood - 0.002, 0.2);
             break;
             
@@ -337,7 +338,7 @@ function updateConsciousBehavior() {
             const playY = Math.cos(time * cubePersonality.playfulness * 1.5) * maxY * 0.9;
             targetPosition.x = playX;
             targetPosition.y = playY;
-            targetRotationSpeed = 0.03 * cubePersonality.energy;
+            targetRotationSpeed = 0.015 * cubePersonality.energy; // Reduced from 0.03
             cubePersonality.mood = Math.min(cubePersonality.mood + 0.01, 1.0);
             break;
             
@@ -347,18 +348,18 @@ function updateConsciousBehavior() {
             targetPosition.y += (Math.random() - 0.5) * maxY * 0.2;
             targetPosition.x = Math.max(-maxX, Math.min(maxX, targetPosition.x));
             targetPosition.y = Math.max(-maxY, Math.min(maxY, targetPosition.y));
-            targetRotationSpeed = 0.05;
+            targetRotationSpeed = 0.025; // Reduced from 0.05
             cubePersonality.mood = Math.min(cubePersonality.mood + 0.02, 1.0);
             break;
             
         case 'idle':
         default:
-            // Gentle wandering movement
-            const wanderX = Math.sin(time * 0.3) * maxX * 0.6 + Math.sin(time * 0.7) * maxX * 0.2;
-            const wanderY = Math.cos(time * 0.25) * maxY * 0.5 + Math.cos(time * 0.6) * maxY * 0.3;
+            // Gentle wandering movement (slower)
+            const wanderX = Math.sin(time * 0.15) * maxX * 0.6 + Math.sin(time * 0.35) * maxX * 0.2; // Reduced time multipliers
+            const wanderY = Math.cos(time * 0.12) * maxY * 0.5 + Math.cos(time * 0.3) * maxY * 0.3; // Reduced time multipliers
             targetPosition.x = wanderX;
             targetPosition.y = wanderY;
-            targetRotationSpeed = 0.01;
+            targetRotationSpeed = 0.005; // Reduced from 0.01
             cubePersonality.mood = Math.max(cubePersonality.mood - 0.001, 0.3);
             break;
     }
@@ -383,28 +384,75 @@ function animate() {
     // Update conscious behavior
     updateConsciousBehavior();
     
-    // Smooth position interpolation
-    cubeGroup.position.x += (targetPosition.x - cubeGroup.position.x) * 0.05;
-    cubeGroup.position.y += (targetPosition.y - cubeGroup.position.y) * 0.05;
+    // Calculate smoothing factors based on cube state
+    let positionSmoothing = 0.02; // Reduced from 0.05
+    let rotationSmoothing = 0.015; // Reduced from 0.03
     
-    // Smooth rotation speed changes
-    currentRotationSpeed += (targetRotationSpeed - currentRotationSpeed) * 0.03;
-    
-    // Apply rotation with consciousness influence
-    if (consciousness.interest > 0.1) {
-        // When interested, rotate to "look" at mouse
-        const lookX = consciousness.focus.y * 0.3;
-        const lookY = consciousness.focus.x * 0.3;
-        cubeGroup.rotation.x += (lookX - cubeGroup.rotation.x) * 0.02 + currentRotationSpeed;
-        cubeGroup.rotation.y += (lookY - cubeGroup.rotation.y) * 0.02 + currentRotationSpeed;
-    } else {
-        // Normal rotation when not focused
-        cubeGroup.rotation.x += currentRotationSpeed;
-        cubeGroup.rotation.y += currentRotationSpeed;
+    switch (cubeState) {
+        case 'excited':
+            positionSmoothing = 0.08; // Reduced from 0.15
+            rotationSmoothing = 0.04; // Reduced from 0.08
+            break;
+        case 'curious':
+            positionSmoothing = 0.04; // Reduced from 0.08
+            rotationSmoothing = 0.025; // Reduced from 0.05
+            break;
+        case 'shy':
+            positionSmoothing = 0.015; // Reduced from 0.03
+            rotationSmoothing = 0.01; // Reduced from 0.02
+            break;
+        case 'playful':
+            positionSmoothing = 0.06; // Reduced from 0.12
+            rotationSmoothing = 0.03; // Reduced from 0.06
+            break;
+        case 'idle':
+        default:
+            positionSmoothing = 0.02; // Reduced from 0.04
+            rotationSmoothing = 0.012; // Reduced from 0.025
+            break;
     }
     
-    // Add subtle breathing/life-like scale variation
-    const breathScale = 1 + Math.sin(Date.now() * 0.001) * 0.02;
+    // Physics-based smooth movement with velocity
+    const deltaX = targetPosition.x - cubeGroup.position.x;
+    const deltaY = targetPosition.y - cubeGroup.position.y;
+    
+    // Add acceleration towards target (reduced acceleration)
+    velocity.x += deltaX * positionSmoothing * 0.15; // Reduced from 0.3
+    velocity.y += deltaY * positionSmoothing * 0.15; // Reduced from 0.3
+    
+    // Apply stronger damping to velocity for slower movement
+    velocity.x *= 0.92; // Increased damping from 0.85
+    velocity.y *= 0.92; // Increased damping from 0.85
+    
+    // Apply velocity to position
+    cubeGroup.position.x += velocity.x;
+    cubeGroup.position.y += velocity.y;
+    
+    // Smooth rotation speed changes with easing
+    const rotationDelta = targetRotationSpeed - currentRotationSpeed;
+    currentRotationSpeed += rotationDelta * rotationSmoothing;
+    
+    // Apply rotation with consciousness influence and smooth interpolation
+    if (consciousness.interest > 0.1) {
+        // When interested, rotate to "look" at mouse with smooth easing
+        const lookIntensity = Math.min(consciousness.interest, 1.0);
+        const lookX = consciousness.focus.y * 0.2 * lookIntensity; // Reduced from 0.3
+        const lookY = consciousness.focus.x * 0.2 * lookIntensity; // Reduced from 0.3
+        
+        // Smooth rotation interpolation (slower)
+        const rotationEasing = 0.03; // Reduced from 0.05
+        cubeGroup.rotation.x += (lookX - cubeGroup.rotation.x) * rotationEasing + currentRotationSpeed;
+        cubeGroup.rotation.y += (lookY - cubeGroup.rotation.y) * rotationEasing + currentRotationSpeed;
+    } else {
+        // Normal rotation when not focused - slower organic variation
+        const organicVariation = Math.sin(Date.now() * 0.0003) * 0.001; // Reduced from 0.0005 and 0.002
+        cubeGroup.rotation.x += currentRotationSpeed + organicVariation;
+        cubeGroup.rotation.y += currentRotationSpeed - organicVariation * 0.7;
+    }
+    
+    // Smoother breathing/life-like scale variation
+    const breathTime = Date.now() * 0.0008;
+    const breathScale = 1 + Math.sin(breathTime) * 0.015 + Math.sin(breathTime * 1.7) * 0.005;
     cubeGroup.scale.setScalar(breathScale);
     
     // Update cube data periodically (every 60 frames ≈ 1 second)
