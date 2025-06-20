@@ -18,6 +18,30 @@ renderer.setClearColor(0x000000, 0); // Transparent background
 const cubeDB = new CubeDB();
 let currentCubeData = null;
 
+// Consciousness simulation variables (initialize early)
+const mouse = new THREE.Vector2();
+const cubePersonality = {
+    curiosity: Math.random() * 0.5 + 0.3, // 0.3-0.8
+    shyness: Math.random() * 0.4 + 0.1,   // 0.1-0.5
+    playfulness: Math.random() * 0.6 + 0.2, // 0.2-0.8
+    attention: 0,
+    mood: 0.5, // 0 = sad, 1 = happy
+    energy: Math.random() * 0.5 + 0.5 // 0.5-1.0
+};
+
+let mousePresent = false;
+let mouseStillTime = 0;
+let lastMouseMove = 0;
+let cubeState = 'idle'; // idle, curious, shy, playful, excited
+let targetPosition = new THREE.Vector3(0, 0, 0);
+let targetRotationSpeed = 0.01;
+let currentRotationSpeed = 0.01;
+let consciousness = {
+    focus: new THREE.Vector2(0, 0),
+    interest: 0,
+    lastInteraction: Date.now()
+};
+
 // Function to generate any random color
 function getRandomGlassColor() {
     // Generate completely random RGB values
@@ -129,12 +153,35 @@ async function initAndLoadCube() {
 
 // Function to update data display (without position and rotation)
 function updateDataDisplay() {
+    if (!currentCubeData) return;
+    
     const cubeInfo = document.getElementById('cube-info');
     const colorHex = '#' + currentCubeData.color.toString(16).padStart(6, '0');
+    
+    // Get emotional state description
+    const getMoodDescription = () => {
+        if (cubePersonality.mood > 0.8) return "Happy";
+        if (cubePersonality.mood > 0.6) return "Content";
+        if (cubePersonality.mood > 0.4) return "Neutral";
+        if (cubePersonality.mood > 0.2) return "Sad";
+        return "Anxious";
+    };
+    
+    const getStateDescription = () => {
+        switch (cubeState) {
+            case 'curious': return "Curious";
+            case 'shy': return "Shy";
+            case 'playful': return "Playful";
+            case 'excited': return "Excited";
+            default: return "Idle";
+        }
+    };
     
     cubeInfo.innerHTML = `
         <div><strong>ID:</strong> ${currentCubeData.name}</div>
         <div><strong>Color:</strong> ${colorHex}</div>
+        <div><strong>Mood:</strong> ${getMoodDescription()}</div>
+        <div><strong>State:</strong> ${getStateDescription()}</div>
         <div><strong>Created:</strong> ${currentCubeData.created.toLocaleTimeString()}</div>
     `;
 }
@@ -190,20 +237,173 @@ scene.add(light);
 // Position camera
 camera.position.z = 8;
 
-// Animation loop
+// Mouse tracking for consciousness
+// Mouse tracking for consciousness
+function onMouseMove(event) {
+    // Normalize mouse coordinates
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    
+    mousePresent = true;
+    lastMouseMove = Date.now();
+    mouseStillTime = 0;
+    
+    // Update consciousness focus
+    consciousness.focus.x = mouse.x;
+    consciousness.focus.y = mouse.y;
+    consciousness.interest = Math.min(consciousness.interest + 0.02, 1.0);
+    consciousness.lastInteraction = Date.now();
+    
+    console.log('Mouse move detected:', mouse.x, mouse.y); // Debug log
+    
+    // Determine cube's reaction based on personality
+    updateCubeState();
+}
+
+function onMouseLeave() {
+    mousePresent = false;
+    consciousness.interest = Math.max(consciousness.interest - 0.1, 0);
+}
+
+function onMouseEnter() {
+    mousePresent = true;
+    consciousness.interest = 0.3;
+}
+
+// Cube consciousness state machine
+function updateCubeState() {
+    const timeSinceLastMove = Date.now() - lastMouseMove;
+    const distanceFromCenter = Math.sqrt(mouse.x * mouse.x + mouse.y * mouse.y);
+    
+    if (!mousePresent) {
+        cubeState = 'idle';
+        return;
+    }
+    
+    // Determine emotional state based on interaction
+    if (timeSinceLastMove < 100) {
+        if (distanceFromCenter < 0.3) {
+            cubeState = cubePersonality.shyness > 0.3 ? 'shy' : 'curious';
+        } else {
+            cubeState = 'curious';
+        }
+    } else if (timeSinceLastMove < 2000) {
+        cubeState = 'playful';
+    } else {
+        cubeState = 'idle';
+    }
+}
+
+// Conscious movement behavior
+function updateConsciousBehavior() {
+    const time = Date.now() * 0.001;
+    
+    console.log('updateConsciousBehavior called, cubeState:', cubeState); // Debug log
+    
+    switch (cubeState) {
+        case 'curious':
+            // Move slightly toward mouse, but not directly
+            targetPosition.x = mouse.x * 0.3 + Math.sin(time * 2) * 0.1;
+            targetPosition.y = mouse.y * 0.3 + Math.cos(time * 1.5) * 0.1;
+            targetRotationSpeed = 0.02 + consciousness.interest * 0.01;
+            cubePersonality.mood = Math.min(cubePersonality.mood + 0.005, 1.0);
+            break;
+            
+        case 'shy':
+            // Move away from mouse but keep watching
+            targetPosition.x = -mouse.x * 0.2 + Math.sin(time) * 0.05;
+            targetPosition.y = -mouse.y * 0.2 + Math.cos(time) * 0.05;
+            targetRotationSpeed = 0.005;
+            cubePersonality.mood = Math.max(cubePersonality.mood - 0.002, 0.2);
+            break;
+            
+        case 'playful':
+            // Energetic movement with personality
+            targetPosition.x = Math.sin(time * cubePersonality.playfulness * 3) * 0.4;
+            targetPosition.y = Math.cos(time * cubePersonality.playfulness * 2) * 0.3;
+            targetRotationSpeed = 0.03 * cubePersonality.energy;
+            cubePersonality.mood = Math.min(cubePersonality.mood + 0.01, 1.0);
+            break;
+            
+        case 'idle':
+        default:
+            // Gentle breathing-like movement
+            targetPosition.x = Math.sin(time * 0.5) * 0.05;
+            targetPosition.y = Math.cos(time * 0.3) * 0.03;
+            targetRotationSpeed = 0.01;
+            cubePersonality.mood = Math.max(cubePersonality.mood - 0.001, 0.3);
+            break;
+    }
+    
+    console.log('Target position:', targetPosition.x, targetPosition.y); // Debug log
+    
+    // Update cube mood affects opacity
+    const moodOpacity = 0.4 + cubePersonality.mood * 0.4;
+    cube.material.opacity = moodOpacity;
+}
+
+// Event listeners
+canvas.addEventListener('mousemove', onMouseMove);
+canvas.addEventListener('mouseenter', onMouseEnter);
+canvas.addEventListener('mouseleave', onMouseLeave);
+
+// Set cursor style
+canvas.style.cursor = 'crosshair';
+
+// Debug: Test if canvas is receiving events
+console.log('Canvas element:', canvas);
+console.log('Canvas dimensions:', canvas.offsetWidth, canvas.offsetHeight);
+console.log('Event listeners added');
+
+// Animation loop with consciousness
 function animate() {
     requestAnimationFrame(animate);
     
-    // Rotate the cube group
-    cubeGroup.rotation.x += 0.01;
-    cubeGroup.rotation.y += 0.01;
+    // Update conscious behavior
+    updateConsciousBehavior();
+    
+    // Smooth position interpolation
+    const oldX = cubeGroup.position.x;
+    const oldY = cubeGroup.position.y;
+    cubeGroup.position.x += (targetPosition.x - cubeGroup.position.x) * 0.05;
+    cubeGroup.position.y += (targetPosition.y - cubeGroup.position.y) * 0.05;
+    
+    // Debug log position changes
+    if (Math.abs(cubeGroup.position.x - oldX) > 0.001 || Math.abs(cubeGroup.position.y - oldY) > 0.001) {
+        console.log('Position updated:', cubeGroup.position.x, cubeGroup.position.y);
+    }
+    
+    // Smooth rotation speed changes
+    currentRotationSpeed += (targetRotationSpeed - currentRotationSpeed) * 0.03;
+    
+    // Apply rotation with consciousness influence
+    if (consciousness.interest > 0.1) {
+        // When interested, rotate to "look" at mouse
+        const lookX = consciousness.focus.y * 0.3;
+        const lookY = consciousness.focus.x * 0.3;
+        cubeGroup.rotation.x += (lookX - cubeGroup.rotation.x) * 0.02 + currentRotationSpeed;
+        cubeGroup.rotation.y += (lookY - cubeGroup.rotation.y) * 0.02 + currentRotationSpeed;
+    } else {
+        // Normal rotation when not focused
+        cubeGroup.rotation.x += currentRotationSpeed;
+        cubeGroup.rotation.y += currentRotationSpeed;
+    }
+    
+    // Add subtle breathing/life-like scale variation
+    const breathScale = 1 + Math.sin(Date.now() * 0.001) * 0.02;
+    cubeGroup.scale.setScalar(breathScale);
     
     // Update cube data periodically (every 60 frames ≈ 1 second)
-    if (frameCount % 60 === 0) {
+    if (frameCount % 60 === 0 && currentCubeData) {
         currentCubeData.rotation = {
             x: cubeGroup.rotation.x,
             y: cubeGroup.rotation.y,
             z: cubeGroup.rotation.z
+        };
+        currentCubeData.position = {
+            x: cubeGroup.position.x,
+            y: cubeGroup.position.y,
+            z: cubeGroup.position.z
         };
         // Auto-save rotation data
         cubeDB.updateCube(currentCubeData).catch(console.error);
