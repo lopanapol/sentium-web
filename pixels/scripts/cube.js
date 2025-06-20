@@ -38,10 +38,29 @@ let material = new THREE.MeshBasicMaterial({
     side: THREE.DoubleSide
 });
 
-// Create edges for outline
+// Create edges for outline (color will be set dynamically)
 const edges = new THREE.EdgesGeometry(geometry);
-const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x000000 });
-const wireframe = new THREE.LineSegments(edges, edgeMaterial);
+let edgeMaterial = new THREE.LineBasicMaterial({ color: 0x000000 });
+let wireframe = new THREE.LineSegments(edges, edgeMaterial);
+
+// Function to update edge color based on surface color
+function updateEdgeColor(surfaceColor) {
+    // Extract RGB components
+    const r = (surfaceColor >> 16) & 255;
+    const g = (surfaceColor >> 8) & 255;
+    const b = surfaceColor & 255;
+    
+    // Make darker by reducing each component by 40%
+    const darkR = Math.floor(r * 0.6);
+    const darkG = Math.floor(g * 0.6);
+    const darkB = Math.floor(b * 0.6);
+    
+    // Convert back to hex
+    const darkerColor = (darkR << 16) | (darkG << 8) | darkB;
+    
+    // Update the edge material color
+    wireframe.material.color.setHex(darkerColor);
+}
 
 // Create cube group
 const cubeGroup = new THREE.Group();
@@ -72,6 +91,7 @@ async function initAndLoadCube() {
             
             // Apply the loaded color to the cube
             cube.material.color.setHex(currentCubeData.color);
+            updateEdgeColor(currentCubeData.color);
             
             // Apply loaded rotation if exists
             if (currentCubeData.rotation) {
@@ -94,6 +114,7 @@ async function initAndLoadCube() {
             
             // Apply the color to the cube
             cube.material.color.setHex(randomColor);
+            updateEdgeColor(randomColor);
             
             // Save the new cube
             await cubeDB.saveCube(currentCubeData);
@@ -143,6 +164,7 @@ document.getElementById('reset-button').addEventListener('click', async () => {
         
         // Apply the new color to the cube
         cube.material.color.setHex(randomColor);
+        updateEdgeColor(randomColor);
         
         // Reset rotation
         cubeGroup.rotation.set(0, 0, 0);

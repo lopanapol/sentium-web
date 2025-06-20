@@ -65,12 +65,13 @@
 }
 
 .reset-btn {
-  background: rgba(255, 69, 69, 0.8);
-  color: white;
+  background: var(--gradient-top);
+  color: black;
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 4px;
   padding: 0.4rem 0.8rem;
   font-size: 0.8rem;
+  font-weight: 600;
   cursor: pointer;
   margin-top: 0.8rem;
   transition: background 0.3s ease;
@@ -78,12 +79,13 @@
 }
 
 .reset-btn:hover {
-  background: rgba(255, 69, 69, 1);
+  background: var(--gradient-bottom);
   border-color: rgba(255, 255, 255, 0.5);
 }
 
 .reset-btn:active {
-  background: rgba(200, 50, 50, 1);
+  background: var(--gradient-bottom);
+  opacity: 0.8;
 }
 
 /* Remove wrapper styling since canvas is now fullscreen */
