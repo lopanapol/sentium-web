@@ -254,8 +254,6 @@ function onMouseMove(event) {
     consciousness.interest = Math.min(consciousness.interest + 0.02, 1.0);
     consciousness.lastInteraction = Date.now();
     
-    console.log('Mouse move detected:', mouse.x, mouse.y); // Debug log
-    
     // Determine cube's reaction based on personality
     updateCubeState();
 }
@@ -298,8 +296,6 @@ function updateCubeState() {
 function updateConsciousBehavior() {
     const time = Date.now() * 0.001;
     
-    console.log('updateConsciousBehavior called, cubeState:', cubeState); // Debug log
-    
     switch (cubeState) {
         case 'curious':
             // Move slightly toward mouse, but not directly
@@ -335,8 +331,6 @@ function updateConsciousBehavior() {
             break;
     }
     
-    console.log('Target position:', targetPosition.x, targetPosition.y); // Debug log
-    
     // Update cube mood affects opacity
     const moodOpacity = 0.4 + cubePersonality.mood * 0.4;
     cube.material.opacity = moodOpacity;
@@ -350,11 +344,6 @@ canvas.addEventListener('mouseleave', onMouseLeave);
 // Set cursor style
 canvas.style.cursor = 'crosshair';
 
-// Debug: Test if canvas is receiving events
-console.log('Canvas element:', canvas);
-console.log('Canvas dimensions:', canvas.offsetWidth, canvas.offsetHeight);
-console.log('Event listeners added');
-
 // Animation loop with consciousness
 function animate() {
     requestAnimationFrame(animate);
@@ -363,15 +352,8 @@ function animate() {
     updateConsciousBehavior();
     
     // Smooth position interpolation
-    const oldX = cubeGroup.position.x;
-    const oldY = cubeGroup.position.y;
     cubeGroup.position.x += (targetPosition.x - cubeGroup.position.x) * 0.05;
     cubeGroup.position.y += (targetPosition.y - cubeGroup.position.y) * 0.05;
-    
-    // Debug log position changes
-    if (Math.abs(cubeGroup.position.x - oldX) > 0.001 || Math.abs(cubeGroup.position.y - oldY) > 0.001) {
-        console.log('Position updated:', cubeGroup.position.x, cubeGroup.position.y);
-    }
     
     // Smooth rotation speed changes
     currentRotationSpeed += (targetRotationSpeed - currentRotationSpeed) * 0.03;
