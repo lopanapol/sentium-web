@@ -279,13 +279,16 @@ function updateCubeState() {
     }
     
     // Determine emotional state based on interaction
-    if (timeSinceLastMove < 100) {
+    if (timeSinceLastMove < 50) {
+        // Very rapid mouse movement = excited
+        cubeState = 'excited';
+    } else if (timeSinceLastMove < 200) {
         if (distanceFromCenter < 0.3) {
             cubeState = cubePersonality.shyness > 0.3 ? 'shy' : 'curious';
         } else {
             cubeState = 'curious';
         }
-    } else if (timeSinceLastMove < 2000) {
+    } else if (timeSinceLastMove < 3000) {
         cubeState = 'playful';
     } else {
         cubeState = 'idle';
@@ -296,36 +299,65 @@ function updateCubeState() {
 function updateConsciousBehavior() {
     const time = Date.now() * 0.001;
     
+    // Calculate actual world space boundaries based on camera setup
+    // With camera at z=8 and FOV=75, we can calculate the visible area
+    const fov = 75 * Math.PI / 180; // Convert to radians
+    const distance = 8;
+    const height = 2 * Math.tan(fov / 2) * distance;
+    const width = height * (window.innerWidth / window.innerHeight);
+    
+    // Use 80% of the visible area to keep cube on screen
+    const maxX = (width / 2) * 0.8;
+    const maxY = (height / 2) * 0.8;
+    
     switch (cubeState) {
         case 'curious':
-            // Move slightly toward mouse, but not directly
-            targetPosition.x = mouse.x * 0.3 + Math.sin(time * 2) * 0.1;
-            targetPosition.y = mouse.y * 0.3 + Math.cos(time * 1.5) * 0.1;
+            // Move toward mouse with some wandering
+            const approachX = mouse.x * maxX * 0.7 + Math.sin(time * 2) * (maxX * 0.3);
+            const approachY = mouse.y * maxY * 0.7 + Math.cos(time * 1.5) * (maxY * 0.3);
+            targetPosition.x = Math.max(-maxX, Math.min(maxX, approachX));
+            targetPosition.y = Math.max(-maxY, Math.min(maxY, approachY));
             targetRotationSpeed = 0.02 + consciousness.interest * 0.01;
             cubePersonality.mood = Math.min(cubePersonality.mood + 0.005, 1.0);
             break;
             
         case 'shy':
-            // Move away from mouse but keep watching
-            targetPosition.x = -mouse.x * 0.2 + Math.sin(time) * 0.05;
-            targetPosition.y = -mouse.y * 0.2 + Math.cos(time) * 0.05;
+            // Move away from mouse to opposite corner
+            const avoidX = -mouse.x * maxX * 0.8 + Math.sin(time) * (maxX * 0.2);
+            const avoidY = -mouse.y * maxY * 0.8 + Math.cos(time) * (maxY * 0.2);
+            targetPosition.x = Math.max(-maxX, Math.min(maxX, avoidX));
+            targetPosition.y = Math.max(-maxY, Math.min(maxY, avoidY));
             targetRotationSpeed = 0.005;
             cubePersonality.mood = Math.max(cubePersonality.mood - 0.002, 0.2);
             break;
             
         case 'playful':
-            // Energetic movement with personality
-            targetPosition.x = Math.sin(time * cubePersonality.playfulness * 3) * 0.4;
-            targetPosition.y = Math.cos(time * cubePersonality.playfulness * 2) * 0.3;
+            // Free-roaming energetic movement across the screen
+            const playX = Math.sin(time * cubePersonality.playfulness * 2) * maxX * 0.9;
+            const playY = Math.cos(time * cubePersonality.playfulness * 1.5) * maxY * 0.9;
+            targetPosition.x = playX;
+            targetPosition.y = playY;
             targetRotationSpeed = 0.03 * cubePersonality.energy;
             cubePersonality.mood = Math.min(cubePersonality.mood + 0.01, 1.0);
             break;
             
+        case 'excited':
+            // Rapid, unpredictable movement
+            targetPosition.x += (Math.random() - 0.5) * maxX * 0.2;
+            targetPosition.y += (Math.random() - 0.5) * maxY * 0.2;
+            targetPosition.x = Math.max(-maxX, Math.min(maxX, targetPosition.x));
+            targetPosition.y = Math.max(-maxY, Math.min(maxY, targetPosition.y));
+            targetRotationSpeed = 0.05;
+            cubePersonality.mood = Math.min(cubePersonality.mood + 0.02, 1.0);
+            break;
+            
         case 'idle':
         default:
-            // Gentle breathing-like movement
-            targetPosition.x = Math.sin(time * 0.5) * 0.05;
-            targetPosition.y = Math.cos(time * 0.3) * 0.03;
+            // Gentle wandering movement
+            const wanderX = Math.sin(time * 0.3) * maxX * 0.6 + Math.sin(time * 0.7) * maxX * 0.2;
+            const wanderY = Math.cos(time * 0.25) * maxY * 0.5 + Math.cos(time * 0.6) * maxY * 0.3;
+            targetPosition.x = wanderX;
+            targetPosition.y = wanderY;
             targetRotationSpeed = 0.01;
             cubePersonality.mood = Math.max(cubePersonality.mood - 0.001, 0.3);
             break;
