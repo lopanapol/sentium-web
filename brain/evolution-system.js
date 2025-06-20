@@ -415,6 +415,11 @@ function applyEvolutionVisuals() {
         pixel.style[prop] = updates[prop];
       }
     }
+    
+    // Create cube faces if this is a cube form
+    if (evo.form.type === 'cube') {
+      createCubeFaces(pixel);
+    }
   });
 }
 
@@ -898,6 +903,27 @@ function teleportPixel(pixel) {
       });
     }, 200);
   });
+}
+
+/**
+ * Create 6 cube faces for a proper 3D cube
+ * @param {HTMLElement} cubeElement - The cube container element
+ */
+function createCubeFaces(cubeElement) {
+  // Remove any existing cube faces first
+  const existingFaces = cubeElement.querySelectorAll('.cube-face');
+  existingFaces.forEach(face => face.remove());
+  
+  // Create all 6 faces
+  const faces = ['front', 'back', 'right', 'left', 'top', 'bottom'];
+  
+  faces.forEach(faceName => {
+    const face = document.createElement('div');
+    face.className = `cube-face ${faceName}`;
+    cubeElement.appendChild(face);
+  });
+  
+  console.log('Created 6 cube faces for proper 3D cube');
 }
 
 // Add cleanup before unload
