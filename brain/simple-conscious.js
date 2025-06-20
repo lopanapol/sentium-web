@@ -63,7 +63,7 @@ function createNewCube() {
     left: ${x}px;
     top: ${y}px;
     z-index: 900;
-    transform: rotate(0deg);
+    transform: rotate(45deg);
     transition: transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1), left 1.8s cubic-bezier(0.25, 0.1, 0.25, 1), top 1.8s cubic-bezier(0.25, 0.1, 0.25, 1);
     animation: cube-float 8s infinite alternate ease-in-out;
   `;
@@ -74,11 +74,11 @@ function createNewCube() {
     style.id = 'cube-float-style';
     style.textContent = `
       @keyframes cube-float {
-        0% { transform: rotate(0deg) translateZ(0); }
-        25% { transform: rotate(0deg) translateZ(5px); }
-        50% { transform: rotate(0deg) translateZ(10px); }
-        75% { transform: rotate(0deg) translateZ(5px); }
-        100% { transform: rotate(0deg) translateZ(0); }
+        0% { transform: rotate(45deg) translateZ(0); }
+        25% { transform: rotate(35deg) translateZ(5px); }
+        50% { transform: rotate(55deg) translateZ(10px); }
+        75% { transform: rotate(40deg) translateZ(5px); }
+        100% { transform: rotate(45deg) translateZ(0); }
       }
     `;
     document.head.appendChild(style);
