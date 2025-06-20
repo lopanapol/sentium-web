@@ -3,14 +3,14 @@
 /* Common 3D Settings */
 .form-3d {
   transform-style: preserve-3d;
-  perspective: 800px;
+  perspective: 5000px;
   transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* Cube Shape */
 .form-cube {
   transform-style: preserve-3d;
-  perspective: 800px;
+  perspective: 5000px;
 }
 
 .form-cube::before,
@@ -35,7 +35,7 @@
 /* Pyramid Shape */
 .form-pyramid {
   transform-style: preserve-3d;
-  perspective: 800px;
+  perspective: 5000px;
   animation: pyramid-rotate 12s infinite linear;
 }
 
@@ -64,7 +64,7 @@
 /* Crystal Shape */
 .form-crystal {
   transform-style: preserve-3d;
-  perspective: 800px;
+  perspective: 5000px;
   clip-path: polygon(50% 0%, 100% 40%, 100% 60%, 50% 100%, 0% 60%, 0% 40%);
   background: linear-gradient(135deg, 
               rgba(255,255,255,0.4) 0%, 

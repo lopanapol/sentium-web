@@ -1,9 +1,11 @@
 // Three.js setup
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-// Get the canvas element
+// Get the canvas element first
 const canvas = document.getElementById('three-canvas');
+
+// Use canvas dimensions for proper aspect ratio
+const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ 
     canvas: canvas,
     alpha: true,
@@ -11,7 +13,7 @@ const renderer = new THREE.WebGLRenderer({
 });
 
 // Set canvas to fullscreen
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(canvas.clientWidth, canvas.clientHeight);
 renderer.setClearColor(0x000000, 0); // Transparent background
 
 // Initialize database
@@ -558,9 +560,9 @@ let frameCount = 0;
 
 // Handle window resize
 window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.aspect = canvas.clientWidth / canvas.clientHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
     
     // Keep cube centered
     cubeGroup.position.set(0, 0, 0);
