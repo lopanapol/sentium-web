@@ -43,21 +43,16 @@ let consciousness = {
     lastInteraction: Date.now()
 };
 
-// Function to generate any random color
-function getRandomGlassColor() {
-    // Generate completely random RGB values
-    const r = Math.floor(Math.random() * 256);
-    const g = Math.floor(Math.random() * 256);
-    const b = Math.floor(Math.random() * 256);
-    
-    // Convert to hex color
-    return (r << 16) | (g << 8) | b;
+// Function to return white color (no longer random)
+function getWhiteColor() {
+    // Always return white color
+    return 0xffffff;
 }
 
 // Create cube geometry and materials (will be updated with persistent data)
 const geometry = new THREE.BoxGeometry(1, 1, 1);
 let material = new THREE.MeshBasicMaterial({ 
-    color: 0x87CEEB, // Default color, will be overridden
+    color: 0xffffff, // White default color
     transparent: true,
     opacity: 0.6,
     side: THREE.DoubleSide
@@ -114,9 +109,9 @@ async function initAndLoadCube() {
                 currentCubeData.created = new Date(currentCubeData.created);
             }
             
-            // Apply the loaded color to the cube
-            cube.material.color.setHex(currentCubeData.color);
-            updateEdgeColor(currentCubeData.color);
+            // Always set cube to white (remove color loading)
+            cube.material.color.setHex(0xffffff);
+            updateEdgeColor(0xffffff);
             
             // Apply loaded rotation if exists
             if (currentCubeData.rotation) {
@@ -127,19 +122,17 @@ async function initAndLoadCube() {
             
             console.log('Loaded existing cube from IndexedDB:', currentCubeData);
         } else {
-            // No existing cube, create new one with random color
-            const randomColor = getRandomGlassColor();
+            // No existing cube, create new one with white color
             currentCubeData = {
-                color: randomColor,
                 position: { x: 0, y: 0, z: 0 },
                 rotation: { x: 0, y: 0, z: 0 },
                 created: new Date(),
                 name: `${Date.now()}`
             };
             
-            // Apply the color to the cube
-            cube.material.color.setHex(randomColor);
-            updateEdgeColor(randomColor);
+            // Apply white color to the cube
+            cube.material.color.setHex(0xffffff);
+            updateEdgeColor(0xffffff);
             
             // Save the new cube
             await cubeDB.saveCube(currentCubeData);
@@ -152,12 +145,11 @@ async function initAndLoadCube() {
     }
 }
 
-// Function to update data display (without position and rotation)
+// Function to update data display (without color and position/rotation)
 function updateDataDisplay() {
     if (!currentCubeData) return;
     
     const cubeInfo = document.getElementById('cube-info');
-    const colorHex = '#' + currentCubeData.color.toString(16).padStart(6, '0');
     
     // Get emotional state description
     const getMoodDescription = () => {
@@ -180,7 +172,6 @@ function updateDataDisplay() {
     
     cubeInfo.innerHTML = `
         <div><strong>ID:</strong> ${currentCubeData.name}</div>
-        <div><strong>Color:</strong> ${colorHex}</div>
         <div><strong>Mood:</strong> ${getMoodDescription()}</div>
         <div><strong>State:</strong> ${getStateDescription()}</div>
         <div><strong>Created:</strong> ${currentCubeData.created.toLocaleTimeString()}</div>
@@ -200,19 +191,17 @@ document.getElementById('reset-button').addEventListener('click', async () => {
         
         console.log('IndexedDB cleared for this site');
         
-        // Create a new cube with random color
-        const randomColor = getRandomGlassColor();
+        // Create a new cube with white color
         currentCubeData = {
-            color: randomColor,
             position: { x: 0, y: 0, z: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             created: new Date(),
             name: `${Date.now()}`
         };
         
-        // Apply the new color to the cube
-        cube.material.color.setHex(randomColor);
-        updateEdgeColor(randomColor);
+        // Apply white color to the cube
+        cube.material.color.setHex(0xffffff);
+        updateEdgeColor(0xffffff);
         
         // Reset rotation
         cubeGroup.rotation.set(0, 0, 0);
@@ -424,6 +413,10 @@ function animate() {
     velocity.x *= 0.92; // Increased damping from 0.85
     velocity.y *= 0.92; // Increased damping from 0.85
     
+    // Calculate movement speed for rotation influence
+    const movementSpeed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
+    const movementRotationInfluence = Math.min(movementSpeed * 15, 0.05); // Scale movement to rotation
+    
     // Apply velocity to position
     cubeGroup.position.x += velocity.x;
     cubeGroup.position.y += velocity.y;
@@ -441,13 +434,19 @@ function animate() {
         
         // Smooth rotation interpolation (slower)
         const rotationEasing = 0.03; // Reduced from 0.05
-        cubeGroup.rotation.x += (lookX - cubeGroup.rotation.x) * rotationEasing + currentRotationSpeed;
-        cubeGroup.rotation.y += (lookY - cubeGroup.rotation.y) * rotationEasing + currentRotationSpeed;
+        cubeGroup.rotation.x += (lookX - cubeGroup.rotation.x) * rotationEasing + currentRotationSpeed + movementRotationInfluence;
+        cubeGroup.rotation.y += (lookY - cubeGroup.rotation.y) * rotationEasing + currentRotationSpeed + movementRotationInfluence * 0.8;
     } else {
-        // Normal rotation when not focused - slower organic variation
+        // Normal rotation when not focused - slower organic variation + movement-based rotation
         const organicVariation = Math.sin(Date.now() * 0.0003) * 0.001; // Reduced from 0.0005 and 0.002
-        cubeGroup.rotation.x += currentRotationSpeed + organicVariation;
-        cubeGroup.rotation.y += currentRotationSpeed - organicVariation * 0.7;
+        
+        // Add movement-based rotation - cube rotates based on its velocity
+        const velocityRotationX = velocity.y * 2; // Vertical movement affects X rotation
+        const velocityRotationY = velocity.x * 2; // Horizontal movement affects Y rotation
+        
+        cubeGroup.rotation.x += currentRotationSpeed + organicVariation + velocityRotationX + movementRotationInfluence;
+        cubeGroup.rotation.y += currentRotationSpeed - organicVariation * 0.7 + velocityRotationY + movementRotationInfluence * 0.8;
+        cubeGroup.rotation.z += movementRotationInfluence * 0.5; // Add some Z rotation for more dynamic movement
     }
     
     // Smoother breathing/life-like scale variation
