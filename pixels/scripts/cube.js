@@ -73,7 +73,8 @@ function getEmotionalColor(mood, state) {
     else primaryEmotion = 'anxious';
     
     // Override with state-specific colors if in special states
-    if (state === 'curious') primaryEmotion = 'curious';
+    if (state === 'happy') primaryEmotion = 'happy';
+    else if (state === 'curious') primaryEmotion = 'curious';
     else if (state === 'shy') primaryEmotion = 'shy';
     else if (state === 'playful') primaryEmotion = 'playful';
     else if (state === 'excited') primaryEmotion = 'excited';
@@ -82,7 +83,7 @@ function getEmotionalColor(mood, state) {
 }
 
 // Create cube geometry and materials (color will be set based on emotions)
-const geometry = new THREE.BoxGeometry(1, 1, 1);
+const geometry = new THREE.BoxGeometry(0.3, 0.3, 0.3); // Smaller cube to look like a 3D pixel
 let material = new THREE.MeshBasicMaterial({ 
     color: 0xffffff, // Initial white, will be updated by emotions
     transparent: true,
@@ -197,6 +198,7 @@ function updateDataDisplay() {
     const getStateDescription = () => {
         switch (cubeState) {
             case 'curious': return "Curious";
+            case 'happy': return "Happy";
             case 'shy': return "Shy";
             case 'playful': return "Playful";
             case 'excited': return "Excited";
@@ -259,8 +261,8 @@ const light = new THREE.DirectionalLight(0xffffff, 1);
 light.position.set(1, 1, 1);
 scene.add(light);
 
-// Position camera
-camera.position.z = 8;
+// Position camera (closer for smaller pixel cube)
+camera.position.z = 2;
 
 // Mouse tracking for consciousness
 // Mouse tracking for consciousness
@@ -290,7 +292,9 @@ function onMouseLeave() {
 
 function onMouseEnter() {
     mousePresent = true;
-    consciousness.interest = 0.3;
+    consciousness.interest = 0.8; // Higher initial interest like a dog seeing owner
+    // Immediate excited reaction when cursor appears
+    cubePersonality.mood = Math.min(cubePersonality.mood + 0.3, 1.0);
 }
 
 // Cube consciousness state machine
@@ -303,17 +307,20 @@ function updateCubeState() {
         return;
     }
     
-    // Determine emotional state based on interaction
-    if (timeSinceLastMove < 50) {
+    // Enhanced emotional state based on interaction (more dog-like)
+    if (timeSinceLastMove < 30) {
         // Very rapid mouse movement = excited
         cubeState = 'excited';
-    } else if (timeSinceLastMove < 200) {
+    } else if (timeSinceLastMove < 100) {
+        // Recent movement = happy and following like a dog
+        cubeState = 'happy';
+    } else if (timeSinceLastMove < 300) {
         if (distanceFromCenter < 0.3) {
             cubeState = cubePersonality.shyness > 0.3 ? 'shy' : 'curious';
         } else {
             cubeState = 'curious';
         }
-    } else if (timeSinceLastMove < 3000) {
+    } else if (timeSinceLastMove < 2000) {
         cubeState = 'playful';
     } else {
         cubeState = 'idle';
@@ -325,9 +332,9 @@ function updateConsciousBehavior() {
     const time = Date.now() * 0.001;
     
     // Calculate actual world space boundaries based on camera setup
-    // With camera at z=8 and FOV=75, we can calculate the visible area
+    // With camera at z=2 and FOV=75, we can calculate the visible area
     const fov = 75 * Math.PI / 180; // Convert to radians
-    const distance = 8;
+    const distance = 2;
     const height = 2 * Math.tan(fov / 2) * distance;
     const width = height * (window.innerWidth / window.innerHeight);
     
@@ -337,13 +344,40 @@ function updateConsciousBehavior() {
     
     switch (cubeState) {
         case 'curious':
-            // Move toward mouse with some wandering
-            const approachX = mouse.x * maxX * 0.7 + Math.sin(time * 2) * (maxX * 0.3);
-            const approachY = mouse.y * maxY * 0.7 + Math.cos(time * 1.5) * (maxY * 0.3);
-            targetPosition.x = Math.max(-maxX, Math.min(maxX, approachX));
-            targetPosition.y = Math.max(-maxY, Math.min(maxY, approachY));
-            targetRotationSpeed = 0.01 + consciousness.interest * 0.005; // Reduced from 0.02 and 0.01
-            cubePersonality.mood = Math.min(cubePersonality.mood + 0.005, 1.0);
+            // Dog-like behavior: follow cursor closely with excitement
+            const followDistance = 0.1; // Stay close to cursor like a loyal dog
+            const bounceIntensity = Math.sin(time * 8) * 0.15; // Bouncing like excited dog
+            const wiggleX = Math.sin(time * 6) * 0.05; // Side-to-side wiggling
+            const wiggleY = Math.cos(time * 7) * 0.05;
+            
+            // Follow cursor directly but with playful offset
+            targetPosition.x = mouse.x * maxX * 0.9 + wiggleX + bounceIntensity * 0.3;
+            targetPosition.y = mouse.y * maxY * 0.9 + wiggleY + Math.abs(bounceIntensity);
+            targetPosition.x = Math.max(-maxX, Math.min(maxX, targetPosition.x));
+            targetPosition.y = Math.max(-maxY, Math.min(maxY, targetPosition.y));
+            
+            targetRotationSpeed = 0.03 + consciousness.interest * 0.02; // More energetic rotation
+            cubePersonality.mood = Math.min(cubePersonality.mood + 0.01, 1.0);
+            break;
+            
+        case 'happy':
+            // Very happy dog-like behavior: close following with tail-wagging motion
+            const tailWag = Math.sin(time * 12) * 0.08; // Fast side-to-side like tail wagging
+            const happyBounce = Math.abs(Math.sin(time * 10)) * 0.1; // Happy bouncing
+            const circleRadius = 0.15;
+            const circleSpeed = time * 4;
+            
+            // Circle around cursor position like an excited dog
+            const circleX = Math.cos(circleSpeed) * circleRadius;
+            const circleY = Math.sin(circleSpeed) * circleRadius;
+            
+            targetPosition.x = mouse.x * maxX * 0.95 + circleX + tailWag;
+            targetPosition.y = mouse.y * maxY * 0.95 + circleY + happyBounce;
+            targetPosition.x = Math.max(-maxX, Math.min(maxX, targetPosition.x));
+            targetPosition.y = Math.max(-maxY, Math.min(maxY, targetPosition.y));
+            
+            targetRotationSpeed = 0.04; // Happy spinning
+            cubePersonality.mood = Math.min(cubePersonality.mood + 0.015, 1.0);
             break;
             
         case 'shy':
@@ -421,6 +455,10 @@ function animate() {
         case 'excited':
             positionSmoothing = 0.08; // Reduced from 0.15
             rotationSmoothing = 0.04; // Reduced from 0.08
+            break;
+        case 'happy':
+            positionSmoothing = 0.07; // Fast response for dog-like following
+            rotationSmoothing = 0.05; // Responsive rotation for happy spinning
             break;
         case 'curious':
             positionSmoothing = 0.04; // Reduced from 0.08
