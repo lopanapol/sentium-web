@@ -13,6 +13,10 @@ const renderer = new THREE.WebGLRenderer({
     antialias: true
 });
 
+// Enable shadows for better lighting
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
 // Set canvas to fullscreen
 renderer.setSize(canvas.clientWidth, canvas.clientHeight);
 renderer.setClearColor(0x000000, 0); // Transparent background
@@ -87,11 +91,15 @@ function getEmotionalColor(mood, state) {
 
 // Create cube geometry and materials (color will be set based on emotions)
 const geometry = new THREE.BoxGeometry(0.15, 0.15, 0.15); // 50% smaller cube (was 0.3)
-let material = new THREE.MeshBasicMaterial({ 
+let material = new THREE.MeshPhongMaterial({ 
     color: 0xffffff, // Initial white, will be updated by emotions
     transparent: true,
-    opacity: 0.6,
-    side: THREE.DoubleSide
+    opacity: 0.8,
+    side: THREE.DoubleSide,
+    shininess: 80,
+    specular: 0x444444,
+    emissive: 0x111111,
+    emissiveIntensity: 0.2
 });
 
 // Create edges for outline (color will be set dynamically)
@@ -121,10 +129,29 @@ function updateEdgeColor(surfaceColor) {
 // Create cube group
 const cubeGroup = new THREE.Group();
 const cube = new THREE.Mesh(geometry, material);
+
+// Enable shadow casting and receiving
+cube.castShadow = true;
+cube.receiveShadow = true;
+
 cubeGroup.add(cube);
 cubeGroup.add(wireframe);
 cubeGroup.position.set(0, 0, 0);
 scene.add(cubeGroup);
+
+// Add a subtle invisible ground plane for shadows
+const groundGeometry = new THREE.PlaneGeometry(10, 10);
+const groundMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0x000000, 
+    transparent: true, 
+    opacity: 0,
+    side: THREE.DoubleSide
+});
+const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -1;
+ground.receiveShadow = true;
+scene.add(ground);
 
 // Initialize current cube data (will be loaded or created)
 currentCubeData = null;
@@ -303,10 +330,42 @@ document.getElementById('reset-button').addEventListener('click', async () => {
     }
 });
 
-// Add some lighting (though not needed for wireframe)
-const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(1, 1, 1);
-scene.add(light);
+// Add comprehensive lighting system
+const ambientLight = new THREE.AmbientLight(0x404040, 0.4); // Soft ambient light
+scene.add(ambientLight);
+
+// Main directional light
+const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+mainLight.position.set(2, 2, 1);
+mainLight.castShadow = true;
+
+// Configure shadow properties for better quality
+mainLight.shadow.mapSize.width = 1024;
+mainLight.shadow.mapSize.height = 1024;
+mainLight.shadow.camera.near = 0.5;
+mainLight.shadow.camera.far = 50;
+mainLight.shadow.camera.left = -2;
+mainLight.shadow.camera.right = 2;
+mainLight.shadow.camera.top = 2;
+mainLight.shadow.camera.bottom = -2;
+mainLight.shadow.bias = -0.0001;
+
+scene.add(mainLight);
+
+// Point light that follows mouse for interactive lighting
+const mouseLight = new THREE.PointLight(0xff4080, 0.6, 3);
+mouseLight.position.set(0, 0, 1);
+scene.add(mouseLight);
+
+// Emotional light that changes with cube's mood
+const emotionalLight = new THREE.PointLight(0xffffff, 0.5, 2);
+emotionalLight.position.set(0, 0, 0.5);
+scene.add(emotionalLight);
+
+// Rim light for dramatic effect
+const rimLight = new THREE.DirectionalLight(0x4080ff, 0.3);
+rimLight.position.set(-1, -1, 1);
+scene.add(rimLight);
 
 // Position camera (closer for smaller pixel cube)
 camera.position.z = 2;
@@ -602,13 +661,58 @@ function updateGlowEffect() {
     glowIntensity += (targetGlowIntensity - glowIntensity) * glowTransitionSpeed;
     
     // Apply glow effect through material properties
-    cube.material.opacity = 0.6 + (glowIntensity * 0.4);
+    cube.material.opacity = 0.7 + (glowIntensity * 0.3);
+    
+    // Update emissive properties for inner glow
+    const emissiveIntensity = glowIntensity * 0.3;
+    cube.material.emissiveIntensity = emissiveIntensity;
+    
+    // Update emotional light intensity and color
+    emotionalLight.intensity = 0.3 + (glowIntensity * 0.4);
+    emotionalLight.color.setHex(targetEmotionalColor);
     
     // Pulsing glow effect
     const pulseTime = animationTime * 0.004;
     const pulse = Math.sin(pulseTime) * 0.1 + Math.sin(pulseTime * 1.7) * 0.05;
-    const finalOpacity = Math.max(0.3, cube.material.opacity + (pulse * glowIntensity));
+    const finalOpacity = Math.max(0.4, cube.material.opacity + (pulse * glowIntensity));
     cube.material.opacity = Math.min(1.0, finalOpacity);
+    
+    // Pulse the emissive color
+    const pulsedEmissiveIntensity = emissiveIntensity + (pulse * glowIntensity * 0.2);
+    cube.material.emissiveIntensity = Math.max(0, Math.min(0.5, pulsedEmissiveIntensity));
+    
+    // Create sparkle effect for excited/happy states
+    if ((cubeState === 'excited' || cubeState === 'happy') && Math.random() < 0.1) {
+        createSparkleEffect();
+    }
+}
+
+function createSparkleEffect() {
+    // Create small sparkle lights around the cube
+    const sparkleLight = new THREE.PointLight(targetEmotionalColor, 0.8, 0.5);
+    
+    // Random position around the cube
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 0.3 + Math.random() * 0.2;
+    sparkleLight.position.x = cubeGroup.position.x + Math.cos(angle) * distance;
+    sparkleLight.position.y = cubeGroup.position.y + Math.sin(angle) * distance;
+    sparkleLight.position.z = cubeGroup.position.z + (Math.random() - 0.5) * 0.3;
+    
+    scene.add(sparkleLight);
+    
+    // Animate sparkle
+    let sparkleLife = 1.0;
+    const animateSparkle = () => {
+        sparkleLife -= 0.05;
+        sparkleLight.intensity = sparkleLife * 0.8;
+        
+        if (sparkleLife > 0) {
+            requestAnimationFrame(animateSparkle);
+        } else {
+            scene.remove(sparkleLight);
+        }
+    };
+    animateSparkle();
 }
 
 function updateColorTransition() {
@@ -633,8 +737,9 @@ function updateColorTransition() {
         
         currentEmotionalColor = (newR << 16) | (newG << 8) | newB;
         
-        // Apply the interpolated color
+        // Apply the interpolated color to diffuse and emissive
         cube.material.color.setHex(currentEmotionalColor);
+        cube.material.emissive.setHex(currentEmotionalColor);
         updateEdgeColor(currentEmotionalColor);
     }
 }
@@ -663,6 +768,74 @@ function updateTrailEffect() {
     trailPositions = trailPositions.filter(pos => currentTime - pos.time < 1000);
     
     // TODO: Visual trail rendering will be added in particle effects section
+}
+
+function updateLighting() {
+    // Update mouse light position to follow cursor
+    if (mousePresent) {
+        const worldMouse = new THREE.Vector3(
+            consciousness.focus.x * 2,
+            consciousness.focus.y * 2,
+            1
+        );
+        mouseLight.position.lerp(worldMouse, 0.1);
+        
+        // Adjust mouse light intensity based on consciousness interest
+        mouseLight.intensity = 0.4 + (consciousness.interest * 0.5);
+        
+        // Change mouse light color based on cube's emotional state
+        const mouseColor = new THREE.Color();
+        mouseColor.setHex(targetEmotionalColor);
+        mouseColor.lerp(new THREE.Color(0xff4080), 0.7); // Mix with pink
+        mouseLight.color.copy(mouseColor);
+    } else {
+        // Fade out mouse light when cursor is away
+        mouseLight.intensity = Math.max(0, mouseLight.intensity - 0.02);
+    }
+    
+    // Update emotional light position to cube position
+    emotionalLight.position.copy(cubeGroup.position);
+    emotionalLight.position.z += 0.3; // Slightly in front
+    
+    // Animate main light for dynamic shadows
+    const time = Date.now() * 0.0005;
+    mainLight.position.x = 2 + Math.sin(time) * 0.5;
+    mainLight.position.y = 2 + Math.cos(time * 0.7) * 0.3;
+    
+    // Update rim light based on cube state
+    if (cubeState === 'excited' || cubeState === 'happy') {
+        rimLight.intensity = 0.4 + Math.sin(time * 3) * 0.1;
+    } else {
+        rimLight.intensity = Math.max(0.2, rimLight.intensity - 0.01);
+    }
+    
+    // Update CSS lighting classes
+    updateCSSLighting();
+}
+
+function updateCSSLighting() {
+    const canvas = document.getElementById('three-canvas');
+    const ambientGlow = document.getElementById('ambient-glow');
+    
+    // Remove existing lighting classes
+    canvas.classList.remove('excited-lighting', 'happy-lighting', 'curious-lighting');
+    ambientGlow.classList.remove('excited', 'happy', 'curious');
+    
+    // Add appropriate lighting class based on cube state
+    switch(cubeState) {
+        case 'excited':
+            canvas.classList.add('excited-lighting');
+            ambientGlow.classList.add('excited');
+            break;
+        case 'happy':
+            canvas.classList.add('happy-lighting');
+            ambientGlow.classList.add('happy');
+            break;
+        case 'curious':
+            canvas.classList.add('curious-lighting');
+            ambientGlow.classList.add('curious');
+            break;
+    }
 }
 
 // Event listeners
@@ -843,7 +1016,31 @@ const triggerCubeContactEffect = (cubeScreenX = window.innerWidth / 2, cubeScree
         cube.material.color.setHex(originalColor);
     }, 300);
     
-    // Contact particle effect removed
+    // Create temporary contact light burst
+    const contactLight = new THREE.PointLight(0xffffff, 2, 1);
+    contactLight.position.copy(cubeGroup.position);
+    contactLight.position.z += 0.2;
+    scene.add(contactLight);
+    
+    // Animate contact light
+    let lightIntensity = 2;
+    const fadeLight = () => {
+        lightIntensity -= 0.1;
+        contactLight.intensity = Math.max(0, lightIntensity);
+        if (lightIntensity > 0) {
+            requestAnimationFrame(fadeLight);
+        } else {
+            scene.remove(contactLight);
+        }
+    };
+    fadeLight();
+    
+    // Flash the emotional light
+    const originalEmotionalIntensity = emotionalLight.intensity;
+    emotionalLight.intensity = 1.5;
+    setTimeout(() => {
+        emotionalLight.intensity = originalEmotionalIntensity;
+    }, 150);
     
     // Cube emotional response to being touched
     cubeState = 'excited';
@@ -906,6 +1103,7 @@ function animate() {
     updateGlowEffect();
     updateColorTransition();
     updateTrailEffect();
+    updateLighting(); // Add lighting updates
     
     // Calculate smoothing factors based on cube state
     let positionSmoothing = 0.02; // Reduced from 0.05
