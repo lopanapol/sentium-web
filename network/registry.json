@@ -20,15 +20,14 @@
       },
       "capabilities": {
         "maxBrandPixels": 10,
-        "supportedFeatures": ["basic-pixels", "evolution", "analytics"]
+        "supportedFeatures": ["basic-pixels", "analytics"]
       },
       "brandPixels": [
         {
           "brandId": "demo-tech-corp",
           "pixelId": "tech-pixel-001",
           "status": "active",
-          "interactions": 0,
-          "evolutionLevel": 1
+          "interactions": 0
         }
       ],
       "performance": {

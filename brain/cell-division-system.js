@@ -433,11 +433,6 @@ function divideCell() {
   
   // Create division pulse effect
   createDivisionPulseEffect(newCell);
-  
-  // Award evolution points if evolution system is available
-  if (window.noeEvolution && typeof awardEvolutionProgress === 'function') {
-    awardEvolutionProgress(5);
-  }
 }
 
 /**

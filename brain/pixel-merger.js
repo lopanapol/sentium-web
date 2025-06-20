@@ -992,12 +992,12 @@ function animateMerge(shapeContainer) {
 function animateMergePersistent(shapeData) {
   // Play merge sound if available
   if (window.playSound) {
-    window.playSound('evolution');
+    window.playSound('click-1');
   }
   
   // Create merge effect
   const effect = document.createElement('div');
-  effect.className = 'evolution-effect';
+  effect.className = 'merge-effect';
   const rect = shapeData.element.getBoundingClientRect();
   effect.style.left = `${rect.left + rect.width/2}px`;
   effect.style.top = `${rect.top + rect.height/2}px`;
@@ -1265,11 +1265,6 @@ function handlePixelMouseEnter(e) {
     pixel.style.transform = originalScale || '';
     pixel.style.zIndex = '9990';
   }, 800);
-  
-  // Track interaction in evolution system if available
-  if (window.noeEvolution && typeof awardEvolutionProgress === 'function') {
-    awardEvolutionProgress(1);
-  }
 }
 
 /**
@@ -1278,7 +1273,7 @@ function handlePixelMouseEnter(e) {
 function handlePixelClick(e) {
   // Play a different sound if available
   if (window.playSound) {
-    window.playSound('evolution');
+    window.playSound('click-2');
   }
   
   const pixel = e.target;
@@ -1322,11 +1317,6 @@ function handlePixelClick(e) {
       pixel.removeChild(ripple);
     }
   }, 800);
-  
-  // Track interaction in evolution system if available
-  if (window.noeEvolution && typeof awardEvolutionProgress === 'function') {
-    awardEvolutionProgress(5);
-  }
 }
 
 /**

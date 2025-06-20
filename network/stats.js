@@ -127,8 +127,7 @@ class SentiumNetworkStats {
       inactiveBrandPixels: pixelsByStatus.inactive || 0,
       uniqueBrands: Object.keys(pixelsByBrand).length,
       topBrands: this.getTopBrands(pixelsByBrand, 10),
-      averageInteractions: this.calculateAverageInteractions(allBrandPixels),
-      evolutionStats: this.calculateEvolutionStats(allBrandPixels)
+      averageInteractions: this.calculateAverageInteractions(allBrandPixels)
     };
   }
 
