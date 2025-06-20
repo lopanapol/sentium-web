@@ -284,7 +284,7 @@ scene.add(light);
 camera.position.z = 2;
 
 // Mouse tracking for consciousness
-// Mouse tracking for consciousness
+// Mouse tracking for consciousness - Enhanced awareness
 function onMouseMove(event) {
     // Normalize mouse coordinates
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -294,55 +294,112 @@ function onMouseMove(event) {
     lastMouseMove = Date.now();
     mouseStillTime = 0;
     
-    // Update consciousness focus
+    // Calculate distance from cube center for awareness
+    const distanceFromCube = Math.sqrt(mouse.x * mouse.x + mouse.y * mouse.y);
+    
+    // Enhanced consciousness response based on distance and movement
     consciousness.focus.x = mouse.x;
     consciousness.focus.y = mouse.y;
-    consciousness.interest = Math.min(consciousness.interest + 0.02, 1.0);
+    
+    // Gradual interest buildup - closer = more interested
+    if (distanceFromCube < 0.3) {
+        // Very close - high interest and excitement
+        consciousness.interest = Math.min(consciousness.interest + 0.05, 1.0);
+        cubePersonality.mood = Math.min(cubePersonality.mood + 0.02, 1.0);
+    } else if (distanceFromCube < 0.6) {
+        // Medium distance - moderate interest
+        consciousness.interest = Math.min(consciousness.interest + 0.03, 0.8);
+        cubePersonality.mood = Math.min(cubePersonality.mood + 0.01, 0.9);
+    } else {
+        // Far away - mild interest
+        consciousness.interest = Math.min(consciousness.interest + 0.01, 0.5);
+    }
+    
     consciousness.lastInteraction = Date.now();
     
-    // Determine cube's reaction based on personality
+    // Determine cube's reaction based on personality and distance
     updateCubeState();
+    
+    // Add subtle "noticing" behavior when cursor first appears
+    if (!mousePresent || Date.now() - consciousness.lastInteraction > 5000) {
+        // Cube "notices" the cursor - slight startle effect
+        cubePersonality.attention = 1.0;
+    }
 }
 
 function onMouseLeave() {
     mousePresent = false;
-    consciousness.interest = Math.max(consciousness.interest - 0.1, 0);
+    consciousness.interest = Math.max(consciousness.interest - 0.15, 0);
+    // Cube feels "lonely" when cursor leaves
+    cubePersonality.mood = Math.max(cubePersonality.mood - 0.1, 0.3);
+    cubeState = 'idle';
 }
 
 function onMouseEnter() {
     mousePresent = true;
-    consciousness.interest = 0.8; // Higher initial interest like a dog seeing owner
-    // Immediate excited reaction when cursor appears
-    cubePersonality.mood = Math.min(cubePersonality.mood + 0.3, 1.0);
+    consciousness.interest = 0.9; // Very excited to see cursor return
+    // Immediate happy reaction when cursor appears - like seeing a friend
+    cubePersonality.mood = Math.min(cubePersonality.mood + 0.4, 1.0);
+    cubePersonality.attention = 1.0;
+    // Small "startle" then recognition behavior
+    setTimeout(() => {
+        if (mousePresent) cubeState = 'excited';
+    }, 100);
 }
 
-// Cube consciousness state machine
+// Enhanced cube consciousness state machine
 function updateCubeState() {
     const timeSinceLastMove = Date.now() - lastMouseMove;
     const distanceFromCenter = Math.sqrt(mouse.x * mouse.x + mouse.y * mouse.y);
     
     if (!mousePresent) {
+        // Gradual mood decline when alone
+        cubePersonality.mood = Math.max(cubePersonality.mood - 0.001, 0.2);
         cubeState = 'idle';
         return;
     }
     
-    // Enhanced emotional state based on interaction (more dog-like)
-    if (timeSinceLastMove < 30) {
-        // Very rapid mouse movement = excited
-        cubeState = 'excited';
-    } else if (timeSinceLastMove < 100) {
-        // Recent movement = happy and following like a dog
-        cubeState = 'happy';
-    } else if (timeSinceLastMove < 300) {
-        if (distanceFromCenter < 0.3) {
-            cubeState = cubePersonality.shyness > 0.3 ? 'shy' : 'curious';
-        } else {
-            cubeState = 'curious';
+    // Cube "watches" and reacts based on cursor behavior
+    if (timeSinceLastMove > 2000) {
+        // Cursor hasn't moved - cube gets curious/concerned
+        mouseStillTime += 16; // Approximate frame time
+        if (mouseStillTime > 3000) {
+            cubeState = distanceFromCenter < 0.4 ? 'curious' : 'idle';
         }
-    } else if (timeSinceLastMove < 2000) {
-        cubeState = 'playful';
     } else {
-        cubeState = 'idle';
+        mouseStillTime = 0;
+    }
+    
+    // Enhanced emotional consciousness - cube "thinks" about cursor behavior
+    if (timeSinceLastMove < 50) {
+        // Very rapid mouse movement = excitement but also slight anxiety
+        cubeState = 'excited';
+        cubePersonality.attention = 1.0;
+    } else if (timeSinceLastMove < 200) {
+        // Recent movement = happy following behavior like recognizing a friend
+        cubeState = 'happy';
+        cubePersonality.mood = Math.min(cubePersonality.mood + 0.005, 1.0);
+    } else if (timeSinceLastMove < 500) {
+        // Moderate pause = curiosity about what you're doing
+        if (distanceFromCenter < 0.3) {
+            // Close and still = either shy or very curious depending on personality
+            cubeState = cubePersonality.shyness > 0.4 ? 'shy' : 'curious';
+            cubePersonality.attention = 0.8;
+        } else if (distanceFromCenter < 0.7) {
+            // Medium distance = safe curiosity
+            cubeState = 'curious';
+        } else {
+            // Far away = watching from distance
+            cubeState = 'idle';
+        }
+    } else if (timeSinceLastMove < 1500) {
+        // Longer pause = cube starts to wonder if you're still there
+        cubeState = 'curious';
+        cubePersonality.attention = Math.max(cubePersonality.attention - 0.01, 0.3);
+    } else {
+        // Long pause = cube gets lonely/bored but still hopeful
+        cubeState = distanceFromCenter < 0.5 ? 'curious' : 'playful';
+        cubePersonality.mood = Math.max(cubePersonality.mood - 0.002, 0.4);
     }
 }
 
@@ -522,17 +579,27 @@ function animate() {
     const rotationDelta = targetRotationSpeed - currentRotationSpeed;
     currentRotationSpeed += rotationDelta * rotationSmoothing;
     
-    // Apply rotation with consciousness influence and smooth interpolation
+    // Enhanced conscious "looking" behavior - cube maintains eye contact
     if (consciousness.interest > 0.1) {
-        // When interested, rotate to "look" at mouse with smooth easing
-        const lookIntensity = Math.min(consciousness.interest, 1.0);
-        const lookX = consciousness.focus.y * 0.2 * lookIntensity; // Reduced from 0.3
-        const lookY = consciousness.focus.x * 0.2 * lookIntensity; // Reduced from 0.3
+        // When interested, cube "looks" at cursor with natural, organic movement
+        const lookIntensity = Math.min(consciousness.interest * cubePersonality.attention, 1.0);
+        const attentionFactor = cubePersonality.attention * 0.3;
         
-        // Smooth rotation interpolation (slower)
-        const rotationEasing = 0.03; // Reduced from 0.05
-        cubeGroup.rotation.x += (lookX - cubeGroup.rotation.x) * rotationEasing + currentRotationSpeed + movementRotationInfluence;
+        // More natural looking angles - like the cube is trying to see you
+        const lookX = consciousness.focus.y * attentionFactor * lookIntensity;
+        const lookY = consciousness.focus.x * attentionFactor * lookIntensity;
+        
+        // Add subtle "blinking" or attention shifts
+        const time = Date.now() * 0.001;
+        const attentionShift = Math.sin(time * 0.5) * 0.05 * consciousness.interest;
+        
+        // Smooth "eye contact" rotation with natural hesitation
+        const rotationEasing = 0.02 + (consciousness.interest * 0.01); // Faster when more interested
+        cubeGroup.rotation.x += (lookX + attentionShift - cubeGroup.rotation.x) * rotationEasing + currentRotationSpeed + movementRotationInfluence;
         cubeGroup.rotation.y += (lookY - cubeGroup.rotation.y) * rotationEasing + currentRotationSpeed + movementRotationInfluence * 0.8;
+        
+        // Gradual attention decay - cube gets distracted over time
+        cubePersonality.attention = Math.max(cubePersonality.attention - 0.0005, 0.1);
     } else {
         // Normal rotation when not focused - slower organic variation + movement-based rotation
         const organicVariation = Math.sin(Date.now() * 0.0003) * 0.001; // Reduced from 0.0005 and 0.002
