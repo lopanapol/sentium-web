@@ -8,10 +8,10 @@ Enhancement plan for the `/pixels` directory to make the pixel pets system more 
 ## 1. Visual Enhancements (Priority 1 - Must Do First)
 
 ### 1.1 Animation Effects
-- [ ] Pulsing/breathing animations for more lifelike feel
-- [ ] Smooth transitions between emotional states
-- [ ] Glow effects based on energy levels
-- [ ] Trailing effects when pet moves quickly
+- [x] Pulsing/breathing animations for more lifelike feel
+- [x] Smooth transitions between emotional states
+- [x] Glow effects based on energy levels
+- [x] Trailing effects when pet moves quickly
 
 ### 1.2 Particle Effects
 - [ ] **Happy/Excited States**: Sparkles, hearts, stars emanating from pet

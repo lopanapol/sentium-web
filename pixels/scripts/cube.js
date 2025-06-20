@@ -147,6 +147,8 @@ async function initAndLoadCube() {
             
             // Set cube color based on initial emotional state
             const initialColor = getEmotionalColor(cubePersonality.mood, cubeState);
+            currentEmotionalColor = initialColor;
+            targetEmotionalColor = initialColor;
             cube.material.color.setHex(initialColor);
             updateEdgeColor(initialColor);
             
@@ -169,6 +171,8 @@ async function initAndLoadCube() {
             
             // Apply emotional color to the cube
             const initialColor = getEmotionalColor(cubePersonality.mood, cubeState);
+            currentEmotionalColor = initialColor;
+            targetEmotionalColor = initialColor;
             cube.material.color.setHex(initialColor);
             updateEdgeColor(initialColor);
             
@@ -278,6 +282,8 @@ document.getElementById('reset-button').addEventListener('click', async () => {
         
         // Apply emotional color to the cube
         const initialColor = getEmotionalColor(cubePersonality.mood, cubeState);
+        currentEmotionalColor = initialColor;
+        targetEmotionalColor = initialColor;
         cube.material.color.setHex(initialColor);
         updateEdgeColor(initialColor);
         
@@ -528,6 +534,135 @@ function updateConsciousBehavior() {
     const currentEmotionalColor = getEmotionalColor(cubePersonality.mood, cubeState);
     cube.material.color.setHex(currentEmotionalColor);
     updateEdgeColor(currentEmotionalColor);
+}
+
+// Animation enhancement variables
+let animationTime = 0;
+let breathingIntensity = 0.02;
+let glowIntensity = 0;
+let targetGlowIntensity = 0;
+let currentEmotionalColor = 0xffffff;
+let targetEmotionalColor = 0xffffff;
+let colorTransitionSpeed = 0.05;
+let trailPositions = [];
+let lastTrailTime = 0;
+
+// Enhanced animation functions
+function updateBreathingAnimation() {
+    // Breathing varies based on emotional state
+    const baseBreathing = 0.015;
+    const emotionalBreathing = {
+        'excited': 0.035,
+        'happy': 0.025,
+        'curious': 0.02,
+        'playful': 0.03,
+        'shy': 0.01,
+        'idle': 0.015
+    };
+    
+    breathingIntensity = emotionalBreathing[cubeState] || baseBreathing;
+    
+    // Breathing speed also varies with emotion
+    const breathingSpeed = {
+        'excited': 0.003,
+        'happy': 0.0025,
+        'curious': 0.002,
+        'playful': 0.0028,
+        'shy': 0.0015,
+        'idle': 0.0018
+    };
+    
+    const speed = breathingSpeed[cubeState] || 0.002;
+    const breathTime = animationTime * speed;
+    
+    // Complex breathing pattern - inhale and exhale with natural rhythm
+    const primaryBreath = Math.sin(breathTime) * breathingIntensity;
+    const secondaryBreath = Math.sin(breathTime * 1.3) * (breathingIntensity * 0.3);
+    const tertiaryBreath = Math.sin(breathTime * 2.1) * (breathingIntensity * 0.15);
+    
+    const totalBreathScale = 1 + primaryBreath + secondaryBreath + tertiaryBreath;
+    cubeGroup.scale.setScalar(totalBreathScale);
+}
+
+function updateGlowEffect() {
+    // Glow intensity based on emotional state and energy
+    const glowLevels = {
+        'excited': 0.8,
+        'happy': 0.6,
+        'curious': 0.4,
+        'playful': 0.5,
+        'shy': 0.1,
+        'idle': 0.2
+    };
+    
+    targetGlowIntensity = (glowLevels[cubeState] || 0.2) * cubePersonality.energy;
+    
+    // Smooth glow transition
+    const glowTransitionSpeed = 0.03;
+    glowIntensity += (targetGlowIntensity - glowIntensity) * glowTransitionSpeed;
+    
+    // Apply glow effect through material properties
+    cube.material.opacity = 0.6 + (glowIntensity * 0.4);
+    
+    // Pulsing glow effect
+    const pulseTime = animationTime * 0.004;
+    const pulse = Math.sin(pulseTime) * 0.1 + Math.sin(pulseTime * 1.7) * 0.05;
+    const finalOpacity = Math.max(0.3, cube.material.opacity + (pulse * glowIntensity));
+    cube.material.opacity = Math.min(1.0, finalOpacity);
+}
+
+function updateColorTransition() {
+    // Get target color based on current emotional state
+    targetEmotionalColor = getEmotionalColor(cubePersonality.mood, cubeState);
+    
+    // Smooth color transition
+    if (currentEmotionalColor !== targetEmotionalColor) {
+        // Extract RGB components from current and target colors
+        const currentR = (currentEmotionalColor >> 16) & 255;
+        const currentG = (currentEmotionalColor >> 8) & 255;
+        const currentB = currentEmotionalColor & 255;
+        
+        const targetR = (targetEmotionalColor >> 16) & 255;
+        const targetG = (targetEmotionalColor >> 8) & 255;
+        const targetB = targetEmotionalColor & 255;
+        
+        // Interpolate between current and target colors
+        const newR = Math.round(currentR + (targetR - currentR) * colorTransitionSpeed);
+        const newG = Math.round(currentG + (targetG - currentG) * colorTransitionSpeed);
+        const newB = Math.round(currentB + (targetB - currentB) * colorTransitionSpeed);
+        
+        currentEmotionalColor = (newR << 16) | (newG << 8) | newB;
+        
+        // Apply the interpolated color
+        cube.material.color.setHex(currentEmotionalColor);
+        updateEdgeColor(currentEmotionalColor);
+    }
+}
+
+function updateTrailEffect() {
+    const currentTime = Date.now();
+    
+    // Add new trail position every 50ms when moving
+    if (currentTime - lastTrailTime > 50) {
+        const movementSpeed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
+        
+        if (movementSpeed > 0.001) { // Only add trail when actually moving
+            trailPositions.push({
+                x: cubeGroup.position.x,
+                y: cubeGroup.position.y,
+                z: cubeGroup.position.z,
+                time: currentTime,
+                intensity: Math.min(movementSpeed * 10, 1.0)
+            });
+            
+            lastTrailTime = currentTime;
+        }
+    }
+    
+    // Remove old trail positions (keep trail for 1 second)
+    trailPositions = trailPositions.filter(pos => currentTime - pos.time < 1000);
+    
+    // TODO: Visual trail rendering will be added in particle effects section
 }
 
 // Event listeners
@@ -802,8 +937,17 @@ document.head.appendChild(style);
 function animate() {
     requestAnimationFrame(animate);
     
+    // Update animation time
+    animationTime = Date.now();
+    
     // Update conscious behavior
     updateConsciousBehavior();
+    
+    // Update animation effects
+    updateBreathingAnimation();
+    updateGlowEffect();
+    updateColorTransition();
+    updateTrailEffect();
     
     // Calculate smoothing factors based on cube state
     let positionSmoothing = 0.02; // Reduced from 0.05
@@ -894,11 +1038,6 @@ function animate() {
         cubeGroup.rotation.y += currentRotationSpeed - organicVariation * 0.7 + velocityRotationY + movementRotationInfluence * 0.8;
         cubeGroup.rotation.z += movementRotationInfluence * 0.5; // Add some Z rotation for more dynamic movement
     }
-    
-    // Smoother breathing/life-like scale variation
-    const breathTime = Date.now() * 0.0008;
-    const breathScale = 1 + Math.sin(breathTime) * 0.015 + Math.sin(breathTime * 1.7) * 0.005;
-    cubeGroup.scale.setScalar(breathScale);
     
     // Update cube data periodically (every 60 frames ≈ 1 second)
     if (frameCount % 60 === 0 && currentCubeData) {
