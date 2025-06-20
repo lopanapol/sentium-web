@@ -1,3 +1,4 @@
+// Three.js Pixel Pet Cube - Updated: 2025-06-20 14:30:00 (Cache Bust)
 // Three.js setup
 const scene = new THREE.Scene();
 
@@ -85,7 +86,7 @@ function getEmotionalColor(mood, state) {
 }
 
 // Create cube geometry and materials (color will be set based on emotions)
-const geometry = new THREE.BoxGeometry(0.3, 0.3, 0.3); // Smaller cube to look like a 3D pixel
+const geometry = new THREE.BoxGeometry(0.15, 0.15, 0.15); // 50% smaller cube (was 0.3)
 let material = new THREE.MeshBasicMaterial({ 
     color: 0xffffff, // Initial white, will be updated by emotions
     transparent: true,
@@ -208,11 +209,27 @@ function updateDataDisplay() {
         }
     };
     
+    // Format date as "2 Jan 2025"
+    const formatCreatedDate = (date) => {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const day = date.getDate();
+        const month = months[date.getMonth()];
+        const year = date.getFullYear();
+        return `${day} ${month} ${year}`;
+    };
+
+    // Format time as "2:01:10 PM"
+    const formatCreatedTime = (date) => {
+        return date.toLocaleTimeString();
+    };
+    
     cubeInfo.innerHTML = `
         <div><strong>ID:</strong> ${currentCubeData.name}</div>
         <div><strong>Mood:</strong> ${getMoodDescription()}</div>
         <div><strong>State:</strong> ${getStateDescription()}</div>
-        <div><strong>Created:</strong> ${currentCubeData.created.toLocaleTimeString()}</div>
+        <div><strong>Date:</strong> ${formatCreatedDate(currentCubeData.created)}</div>
+        <div><strong>Time:</strong> ${formatCreatedTime(currentCubeData.created)}</div>
     `;
 }
 
@@ -403,12 +420,12 @@ function updateConsciousBehavior() {
             break;
             
         case 'excited':
-            // Rapid, unpredictable movement
-            targetPosition.x += (Math.random() - 0.5) * maxX * 0.2;
-            targetPosition.y += (Math.random() - 0.5) * maxY * 0.2;
+            // Gentle excited movement (reduced from rapid/unpredictable)
+            targetPosition.x += (Math.random() - 0.5) * maxX * 0.08; // Reduced from 0.2
+            targetPosition.y += (Math.random() - 0.5) * maxY * 0.08; // Reduced from 0.2
             targetPosition.x = Math.max(-maxX, Math.min(maxX, targetPosition.x));
             targetPosition.y = Math.max(-maxY, Math.min(maxY, targetPosition.y));
-            targetRotationSpeed = 0.025; // Reduced from 0.05
+            targetRotationSpeed = 0.015; // Reduced from 0.025
             cubePersonality.mood = Math.min(cubePersonality.mood + 0.02, 1.0);
             break;
             
@@ -455,8 +472,8 @@ function animate() {
     
     switch (cubeState) {
         case 'excited':
-            positionSmoothing = 0.08; // Reduced from 0.15
-            rotationSmoothing = 0.04; // Reduced from 0.08
+            positionSmoothing = 0.04; // Reduced from 0.08 for calmer movement
+            rotationSmoothing = 0.025; // Reduced from 0.04
             break;
         case 'happy':
             positionSmoothing = 0.07; // Fast response for dog-like following
