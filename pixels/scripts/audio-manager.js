@@ -39,7 +39,7 @@ class RetroAudioManager {
             this.soundQueue.forEach(sound => this.playSound(sound.type, sound.params));
             this.soundQueue = [];
             
-            console.log('🔊 Retro Audio Manager initialized');
+            console.log('Retro Audio Manager initialized');
         } catch (error) {
             console.warn('Audio not supported:', error);
         }
@@ -210,30 +210,6 @@ class RetroAudioManager {
         if (!this.isInitialized) {
             this.soundQueue.push({ type, params });
             return;
-        }
-
-        switch (type) {
-            case 'cubeInteraction':
-                this.playCubeInteraction();
-                break;
-            case 'cubeGrowth':
-                this.playCubeGrowth();
-                break;
-            case 'cubeSpawn':
-                this.playCubeSpawn();
-                break;
-            case 'hover':
-                this.playHover();
-                break;
-            case 'clusterFormation':
-                this.playClusterFormation();
-                break;
-            case 'ambientPulse':
-                this.playAmbientPulse();
-                break;
-            case 'mouseMove':
-                this.playMouseMove();
-                break;
         }
     }
 }
