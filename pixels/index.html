@@ -9,8 +9,35 @@
     <link rel="stylesheet" href="../css/base.css?v=2" />
     <link rel="stylesheet" href="css/pixel-pets.css?v=2" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="scripts/mobile-touch-handler.js"></script>
     <script src="scripts/cubedb.js"></script>
     <script src="scripts/cube.js" defer></script>
+    <script>
+        // Additional zoom prevention for stubborn mobile browsers
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
+        document.addEventListener('gesturechange', function(e) {
+            e.preventDefault();
+        });
+        document.addEventListener('gestureend', function(e) {
+            e.preventDefault();
+        });
+        
+        // Prevent wheel zoom
+        document.addEventListener('wheel', function(e) {
+            if (e.ctrlKey) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Prevent keyboard zoom
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '-' || e.key === '0')) {
+                e.preventDefault();
+            }
+        });
+    </script>
 </head>
 <body>
     <div class="ambient-glow" id="ambient-glow"></div>
