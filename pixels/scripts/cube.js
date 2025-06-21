@@ -240,46 +240,63 @@ function triggerCubeGrowth() {
             new THREE.Vector3(0, 0, -cubeSize)      // Back
         ];
         
-        // Find the best direction that doesn't overlap with existing cubes
+        // Find the best direction that creates a connected body structure
         let bestPosition = null;
         let minDistance = Infinity;
         
         for (const direction of directions) {
             const testPosition = parentCube.group.position.clone().add(direction);
             
-            // Check if this position is too close to existing cubes
-            let tooClose = false;
+            // Check if this position is already occupied by existing cubes
+            let occupied = false;
             let totalDistance = 0;
             
             for (const existingCube of cubeGrowthSystem.allCubes) {
                 const distance = testPosition.distanceTo(existingCube.group.position);
                 totalDistance += distance;
                 
-                // If too close to another cube (less than 80% of cube size), skip this direction
-                if (distance < cubeSize * 0.8) {
-                    tooClose = true;
+                // If position is exactly where another cube is (connected body), skip this direction
+                if (distance < cubeSize * 0.1) {
+                    occupied = true;
                     break;
                 }
             }
             
-            // Prefer positions that maintain compact clustering
-            if (!tooClose && totalDistance < minDistance) {
+            // Prefer positions that create tight clustering for unified body appearance
+            if (!occupied && totalDistance < minDistance) {
                 minDistance = totalDistance;
                 bestPosition = testPosition;
             }
         }
         
-        // If no good adjacent position found, use a nearby position with small offset
+        // If no perfect adjacent position found, find the closest valid position to maintain body unity
         if (!bestPosition) {
-            const randomDirection = directions[Math.floor(Math.random() * directions.length)];
-            bestPosition = parentCube.group.position.clone().add(randomDirection);
+            // Try smaller offsets first to maintain tight body structure
+            const smallDirections = directions.map(dir => dir.clone().multiplyScalar(0.5));
             
-            // Add small random offset to prevent perfect overlap
-            bestPosition.add(new THREE.Vector3(
-                (Math.random() - 0.5) * cubeSize * 0.3,
-                (Math.random() - 0.5) * cubeSize * 0.3,
-                (Math.random() - 0.5) * cubeSize * 0.3
-            ));
+            for (const direction of smallDirections) {
+                const testPosition = parentCube.group.position.clone().add(direction);
+                
+                let occupied = false;
+                for (const existingCube of cubeGrowthSystem.allCubes) {
+                    const distance = testPosition.distanceTo(existingCube.group.position);
+                    if (distance < cubeSize * 0.2) {
+                        occupied = true;
+                        break;
+                    }
+                }
+                
+                if (!occupied) {
+                    bestPosition = testPosition;
+                    break;
+                }
+            }
+            
+            // Last resort: slight offset from parent to maintain connection
+            if (!bestPosition) {
+                const randomDirection = directions[Math.floor(Math.random() * directions.length)];
+                bestPosition = parentCube.group.position.clone().add(randomDirection.multiplyScalar(0.8));
+            }
         }
         
         createNewCube(bestPosition, cubeGrowthSystem.cubeGeneration + 1);
@@ -410,144 +427,124 @@ function updateAllCubeColors(color) {
     });
 }
 
-// Function to update all cubes with Rubik's cube-style movement (1 move per 5 seconds)
+// Function to update all cubes with unified body movement (moves as single organism)
 function updateCubeGroupMovement() {
     const time = Date.now() * 0.001;
     
-    // 1 move per 5 seconds - slow, deliberate Rubik's cube movements
+    // Unified organism movement - all cubes move together as one body
     const movementCycle = time * 0.2; // 0.2 = 1 complete cycle per 5 seconds
     
-    // Slow organism-wide movement while individual cubes move independently
-    const baseMovementIntensity = 0.03; // Reduced for more stable base movement
+    // Single organism movement pattern
+    const baseMovementIntensity = 0.03;
     
-    // Gentle organism group movement
+    // Unified organism group movement - all cubes move together
     const organismMovement = new THREE.Vector3(
         Math.sin(movementCycle * 0.6) * baseMovementIntensity,
         Math.cos(movementCycle * 0.4) * baseMovementIntensity,
         0
     );
     
-    // Apply base movement to organism group
+    // Apply unified movement to entire organism group
     cubeGrowthSystem.organismGroup.position.add(organismMovement.multiplyScalar(0.016));
     
-    // Slow organism rotation
+    // Unified organism rotation - entire body rotates together
     cubeGrowthSystem.organismGroup.rotation.y += Math.sin(time * 0.2) * 0.0008;
     
-    // Individual cube movements - Rubik's cube style
+    // Individual cube movements within the unified body - minimal relative motion
     cubeGrowthSystem.allCubes.forEach((cubeData, index) => {
-        const phaseOffset = index * 1.2; // More distinct phase differences for each cube
-        const rubikMovementIntensity = 0.08; // Individual cube movement range
+        const phaseOffset = index * 0.3;
+        const subtleMovementIntensity = 0.02; // Much smaller individual movement
         
-        // Each cube has its own movement pattern based on emotional state
+        // Subtle individual movement within the unified body based on emotional state
         let individualMovement = new THREE.Vector3(0, 0, 0);
         let rotationSpeed = { x: 0, y: 0, z: 0 };
         
         switch (cubeState) {
             case 'excited':
-                // Excited cubes spin and move more dynamically like a scrambled Rubik's cube
-                individualMovement.x = Math.sin(movementCycle * 2 + phaseOffset) * rubikMovementIntensity * 1.5;
-                individualMovement.y = Math.cos(movementCycle * 1.8 + phaseOffset) * rubikMovementIntensity * 1.2;
-                individualMovement.z = Math.sin(movementCycle * 1.5 + phaseOffset) * rubikMovementIntensity * 0.8;
+                // Excited: slight vibration within the unified body
+                individualMovement.x = Math.sin(movementCycle * 4 + phaseOffset) * subtleMovementIntensity * 0.5;
+                individualMovement.y = Math.cos(movementCycle * 3.5 + phaseOffset) * subtleMovementIntensity * 0.3;
+                individualMovement.z = Math.sin(movementCycle * 3 + phaseOffset) * subtleMovementIntensity * 0.2;
                 
-                rotationSpeed.x = 0.015 + Math.sin(time * 3 + phaseOffset) * 0.02;
-                rotationSpeed.y = 0.012 + Math.cos(time * 2.5 + phaseOffset) * 0.015;
-                rotationSpeed.z = 0.008 + Math.sin(time * 2 + phaseOffset) * 0.01;
+                rotationSpeed.x = 0.008 + Math.sin(time * 2 + phaseOffset) * 0.01;
+                rotationSpeed.y = 0.006 + Math.cos(time * 1.8 + phaseOffset) * 0.008;
+                rotationSpeed.z = 0.004 + Math.sin(time * 1.5 + phaseOffset) * 0.006;
                 break;
                 
             case 'happy':
-                // Happy cubes do smooth, flowing rotations like solving a cube
-                individualMovement.x = Math.sin(movementCycle + phaseOffset) * rubikMovementIntensity;
-                individualMovement.y = Math.sin(movementCycle * 1.5 + phaseOffset) * rubikMovementIntensity * 0.8;
-                individualMovement.z = Math.cos(movementCycle * 0.8 + phaseOffset) * rubikMovementIntensity * 0.5;
-                
-                rotationSpeed.x = 0.008 + Math.sin(time * 2 + phaseOffset) * 0.01;
-                rotationSpeed.y = 0.01 + Math.cos(time * 1.8 + phaseOffset) * 0.012;
-                rotationSpeed.z = 0.006 + Math.sin(time * 1.5 + phaseOffset) * 0.008;
-                break;
-                
             case 'curious':
-                // Curious cubes lean and tilt toward the cursor with individual rotations
-                const cursorInfluence = 0.05;
-                individualMovement.x = mouse.x * cursorInfluence + Math.sin(movementCycle * 1.2 + phaseOffset) * rubikMovementIntensity * 0.7;
-                individualMovement.y = mouse.y * cursorInfluence + Math.cos(movementCycle * 0.9 + phaseOffset) * rubikMovementIntensity * 0.7;
-                individualMovement.z = Math.sin(movementCycle * 0.6 + phaseOffset) * rubikMovementIntensity * 0.3;
-                
-                rotationSpeed.x = 0.006 + Math.sin(time * 1.5 + phaseOffset) * 0.008;
-                rotationSpeed.y = 0.008 + Math.cos(time * 1.2 + phaseOffset) * 0.01;
-                rotationSpeed.z = 0.004 + Math.sin(time * 1.8 + phaseOffset) * 0.006;
-                break;
-                
             case 'playful':
-                // Playful cubes bounce and spin like playing with a Rubik's cube
-                individualMovement.x = Math.sin(movementCycle * 1.8 + phaseOffset) * rubikMovementIntensity * 1.3;
-                individualMovement.y = Math.abs(Math.sin(movementCycle * 2.2 + phaseOffset)) * rubikMovementIntensity;
-                individualMovement.z = Math.cos(movementCycle * 1.4 + phaseOffset) * rubikMovementIntensity * 0.6;
+                // Happy states: gentle synchronized movement within body
+                individualMovement.x = Math.sin(movementCycle + phaseOffset) * subtleMovementIntensity * 0.3;
+                individualMovement.y = Math.sin(movementCycle * 1.2 + phaseOffset) * subtleMovementIntensity * 0.2;
+                individualMovement.z = Math.cos(movementCycle * 0.8 + phaseOffset) * subtleMovementIntensity * 0.1;
                 
-                rotationSpeed.x = 0.012 + Math.sin(time * 2.5 + phaseOffset) * 0.015;
-                rotationSpeed.y = 0.01 + Math.cos(time * 2.8 + phaseOffset) * 0.018;
-                rotationSpeed.z = 0.008 + Math.sin(time * 2.2 + phaseOffset) * 0.012;
+                rotationSpeed.x = 0.004 + Math.sin(time * 1.2 + phaseOffset) * 0.005;
+                rotationSpeed.y = 0.005 + Math.cos(time + phaseOffset) * 0.006;
+                rotationSpeed.z = 0.003 + Math.sin(time * 0.8 + phaseOffset) * 0.004;
                 break;
                 
             case 'shy':
-                // Shy cubes move closer together with subtle, hesitant rotations
-                const centerPull = 0.02;
-                individualMovement.x = -cubeData.group.position.x * centerPull + Math.sin(movementCycle * 0.8 + phaseOffset) * rubikMovementIntensity * 0.4;
-                individualMovement.y = -cubeData.group.position.y * centerPull + Math.cos(movementCycle * 0.6 + phaseOffset) * rubikMovementIntensity * 0.4;
-                individualMovement.z = Math.sin(movementCycle * 0.4 + phaseOffset) * rubikMovementIntensity * 0.2;
+                // Shy: cubes huddle closer together within the body
+                const centerPull = 0.03;
+                individualMovement.x = -cubeData.group.position.x * centerPull + Math.sin(movementCycle * 0.5 + phaseOffset) * subtleMovementIntensity * 0.2;
+                individualMovement.y = -cubeData.group.position.y * centerPull + Math.cos(movementCycle * 0.4 + phaseOffset) * subtleMovementIntensity * 0.2;
+                individualMovement.z = Math.sin(movementCycle * 0.3 + phaseOffset) * subtleMovementIntensity * 0.1;
                 
-                rotationSpeed.x = 0.003 + Math.sin(time * 0.8 + phaseOffset) * 0.004;
-                rotationSpeed.y = 0.004 + Math.cos(time * 0.6 + phaseOffset) * 0.005;
-                rotationSpeed.z = 0.002 + Math.sin(time * 1.0 + phaseOffset) * 0.003;
+                rotationSpeed.x = 0.002 + Math.sin(time * 0.6 + phaseOffset) * 0.003;
+                rotationSpeed.y = 0.003 + Math.cos(time * 0.4 + phaseOffset) * 0.004;
+                rotationSpeed.z = 0.001 + Math.sin(time * 0.8 + phaseOffset) * 0.002;
                 break;
                 
             case 'idle':
             default:
-                // Idle cubes do gentle, meditative rotations like slowly turning a solved cube
-                individualMovement.x = Math.sin(movementCycle * 0.9 + phaseOffset) * rubikMovementIntensity * 0.6;
-                individualMovement.y = Math.cos(movementCycle * 0.7 + phaseOffset) * rubikMovementIntensity * 0.5;
-                individualMovement.z = Math.sin(movementCycle * 0.5 + phaseOffset) * rubikMovementIntensity * 0.3;
+                // Idle: minimal movement, maintaining tight body formation
+                individualMovement.x = Math.sin(movementCycle * 0.6 + phaseOffset) * subtleMovementIntensity * 0.3;
+                individualMovement.y = Math.cos(movementCycle * 0.5 + phaseOffset) * subtleMovementIntensity * 0.2;
+                individualMovement.z = Math.sin(movementCycle * 0.4 + phaseOffset) * subtleMovementIntensity * 0.1;
                 
-                rotationSpeed.x = 0.005 + Math.sin(time * 1.0 + phaseOffset) * 0.006;
-                rotationSpeed.y = 0.004 + Math.cos(time * 0.8 + phaseOffset) * 0.007;
-                rotationSpeed.z = 0.003 + Math.sin(time * 1.2 + phaseOffset) * 0.005;
+                rotationSpeed.x = 0.003 + Math.sin(time * 0.8 + phaseOffset) * 0.004;
+                rotationSpeed.y = 0.002 + Math.cos(time * 0.6 + phaseOffset) * 0.005;
+                rotationSpeed.z = 0.002 + Math.sin(time + phaseOffset) * 0.003;
                 break;
         }
         
-        // Apply individual movement relative to target position
+        // Apply very subtle individual movement relative to target position within unified body
         cubeData.group.position.copy(cubeData.targetPosition);
         cubeData.group.position.add(individualMovement);
         
-        // Apply Rubik's cube-style rotations - each cube rotates independently
+        // Apply subtle individual rotations within the unified body
         cubeData.group.rotation.x += rotationSpeed.x;
         cubeData.group.rotation.y += rotationSpeed.y;
         cubeData.group.rotation.z += rotationSpeed.z;
         
-        // Maintain loose formation - cubes can move more freely like Rubik's cube pieces
-        const maxDistance = 0.25; // Increased tolerance for more dynamic movement
+        // Strong cohesion - keep cubes tightly connected as one body
+        const maxDistance = 0.08; // Much tighter formation
         const distanceFromTarget = cubeData.group.position.distanceTo(cubeData.targetPosition);
         if (distanceFromTarget > maxDistance) {
-            // Gentle spring-back to maintain overall structure
-            const pullStrength = 0.05;
+            // Strong spring-back to maintain unified body structure
+            const pullStrength = 0.15; // Stronger pull back
             const direction = cubeData.targetPosition.clone().sub(cubeData.group.position).normalize();
             cubeData.group.position.add(direction.multiplyScalar(pullStrength));
         }
         
-        // Keep individual cubes within reasonable bounds
-        const maxIndividualDistance = 0.4;
-        if (cubeData.group.position.length() > maxIndividualDistance) {
+        // Keep individual cubes very close to their target positions within the body
+        const maxIndividualDistance = 0.1; // Much tighter bounds
+        const distanceFromOrigin = cubeData.group.position.length();
+        if (distanceFromOrigin > maxIndividualDistance) {
             cubeData.group.position.normalize().multiplyScalar(maxIndividualDistance);
         }
     });
     
-    // Keep the entire organism within screen bounds
+    // Keep the entire unified organism within screen bounds
     const maxX = 0.6;
     const maxY = 0.4;
     cubeGrowthSystem.organismGroup.position.x = Math.max(-maxX, Math.min(maxX, cubeGrowthSystem.organismGroup.position.x));
     cubeGrowthSystem.organismGroup.position.y = Math.max(-maxY, Math.min(maxY, cubeGrowthSystem.organismGroup.position.y));
     
-    // Optional: Very subtle organism-wide breathing
+    // Unified breathing effect for the entire organism
     if (cubeGrowthSystem.allCubes.length > 1) {
-        const breathingScale = 1 + Math.sin(time * 0.8) * 0.005; // Very gentle breathing
+        const breathingScale = 1 + Math.sin(time * 0.8) * 0.003; // Very subtle unified breathing
         cubeGrowthSystem.organismGroup.scale.setScalar(breathingScale);
     }
 }
@@ -614,8 +611,8 @@ async function initAndLoadCube() {
             console.log(`Loaded existing cube from IndexedDB. Max Gen: ${cubeGrowthSystem.maxGeneration}, Size: ${cubeGrowthSystem.baseSize.toFixed(3)}`, currentCubeData);
         } else {
             // No existing cube, create new one with random genetics
-            cubeGrowthSystem.maxGeneration = Math.floor(Math.random() * 3) + 2; // Random 2-4 generations
-            cubeGrowthSystem.baseSize = Math.random() * 0.1 + 0.05; // Random 0.05-0.15 size
+            cubeGrowthSystem.maxGeneration = Math.floor(Math.random() * 6) + 1; // Random 1-6 generations
+            cubeGrowthSystem.baseSize = Math.random() * 0.15 + 0.15; // Random 0.15-0.3 size
             
             // Initialize the main cube with the new random size
             initializeMainCube();
