@@ -280,7 +280,7 @@ function updateDataDisplay() {
         <div><strong>ID:</strong> ${currentCubeData.name}</div>
         <div><strong>Mood:</strong> ${getMoodDescription()}</div>
         <div><strong>State:</strong> ${getStateDescription()}</div>
-        <div><strong>Date:</strong> ${formatCreatedDate(currentCubeData.created)}</div>
+        <div><strong>Born:</strong> ${formatCreatedDate(currentCubeData.created)}</div>
         <div><strong>Time:</strong> ${formatCreatedTime(currentCubeData.created)}</div>
         <div><strong>Age:</strong> ${calculateAge(currentCubeData.created)}</div>
     `;
