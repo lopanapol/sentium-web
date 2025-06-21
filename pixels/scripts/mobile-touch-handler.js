@@ -9,38 +9,26 @@
   let isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   
   if (isMobile || isTouch) {
-    // Prevent default touch behaviors that cause unwanted movement
+    // Prevent pinch-to-zoom specifically
     document.addEventListener('touchstart', function(e) {
-      // Allow touch on interactive elements
-      const target = e.target;
-      const interactiveElements = ['BUTTON', 'A', 'INPUT', 'TEXTAREA', 'SELECT'];
-      const hasInteractiveClass = target.classList.contains('illustration') || 
-                                  target.classList.contains('btn') || 
-                                  target.classList.contains('sound-toggle') ||
-                                  target.closest('#sentium-logo') ||
-                                  target.closest('.illustration');
-      
-      if (!interactiveElements.includes(target.tagName) && !hasInteractiveClass) {
-        // Prevent scrolling/movement for non-interactive touches
+      if (e.touches.length > 1) {
         e.preventDefault();
       }
     }, { passive: false });
     
     document.addEventListener('touchmove', function(e) {
-      // Allow scrolling only in the wrapper container
-      const target = e.target;
-      const wrapper = target.closest('.wrapper');
-      
-      if (!wrapper) {
+      if (e.touches.length > 1) {
         e.preventDefault();
       }
     }, { passive: false });
     
-    // Prevent iOS bounce effect
     document.addEventListener('touchend', function(e) {
-      e.preventDefault();
+      // Only prevent if it was a multi-touch
+      if (e.touches.length > 0) {
+        e.preventDefault();
+      }
     }, { passive: false });
-    
+
     // Fix for iOS Safari viewport issues
     function fixViewport() {
       const viewport = document.querySelector('meta[name="viewport"]');
