@@ -29,14 +29,14 @@ let currentCubeData = null;
 let cubeGrowthSystem = {
     isInteracting: false,
     interactionStartTime: 0,
-    growthThreshold: 2000, // 2 seconds in milliseconds
+    growthThreshold: 1000, // 1 second in milliseconds (reduced from 2000)
     cubeGeneration: 0, // 0 = 1 cube, 1 = 2 cubes, 2 = 4 cubes, etc.
     allCubes: [], // Array to store all cube meshes
     maxGeneration: 6, // Max 2^6 = 64 cubes
     baseSize: 0.15, // Base cube size
     hasGrown: false, // Track if growth has occurred during current interaction
     lastGrowthTime: 0, // Prevent rapid successive growths
-    growthCooldown: 1000, // 1 second cooldown between growths
+    growthCooldown: 500, // 0.5 second cooldown between growths (reduced from 1000)
     organismGroup: null // Single group that contains all cubes as one organism
 };
 
@@ -303,7 +303,86 @@ function triggerCubeGrowth() {
     cubeGrowthSystem.lastGrowthTime = currentTime;
     cubeGrowthSystem.hasGrown = true;
     
+    // Save growth state to database
+    saveGrowthState();
+    
     console.log(`Cube growth triggered! Generation: ${cubeGrowthSystem.cubeGeneration}, Total cubes: ${cubeGrowthSystem.allCubes.length}`);
+}
+
+// Function to save current growth state to database
+async function saveGrowthState() {
+    if (!currentCubeData) return;
+    
+    try {
+        // Save growth system state
+        currentCubeData.growthState = {
+            generation: cubeGrowthSystem.cubeGeneration,
+            totalCubes: cubeGrowthSystem.allCubes.length,
+            cubePositions: cubeGrowthSystem.allCubes.map(cubeData => ({
+                position: {
+                    x: cubeData.group.position.x,
+                    y: cubeData.group.position.y,
+                    z: cubeData.group.position.z
+                },
+                generation: cubeData.generation
+            }))
+        };
+        
+        // Save organism position
+        currentCubeData.position = {
+            x: cubeGrowthSystem.organismGroup.position.x,
+            y: cubeGrowthSystem.organismGroup.position.y,
+            z: cubeGrowthSystem.organismGroup.position.z
+        };
+        
+        // Save organism rotation
+        currentCubeData.rotation = {
+            x: cubeGrowthSystem.organismGroup.rotation.x,
+            y: cubeGrowthSystem.organismGroup.rotation.y,
+            z: cubeGrowthSystem.organismGroup.rotation.z
+        };
+        
+        await cubeDB.updateCube(currentCubeData);
+        console.log('Growth state saved to database');
+    } catch (error) {
+        console.error('Error saving growth state:', error);
+    }
+}
+
+// Function to restore growth state from database
+function restoreGrowthState(cubeData) {
+    if (!cubeData.growthState) return;
+    
+    try {
+        const growthState = cubeData.growthState;
+        
+        // Clear existing cubes except the first one (main cube)
+        while (cubeGrowthSystem.allCubes.length > 1) {
+            const cubeToRemove = cubeGrowthSystem.allCubes.pop();
+            cubeGrowthSystem.organismGroup.remove(cubeToRemove.group);
+        }
+        
+        // Restore growth generation
+        cubeGrowthSystem.cubeGeneration = growthState.generation || 0;
+        
+        // Recreate all cubes from saved positions
+        if (growthState.cubePositions && growthState.cubePositions.length > 1) {
+            // Skip the first position (main cube) and recreate the rest
+            for (let i = 1; i < growthState.cubePositions.length; i++) {
+                const savedCube = growthState.cubePositions[i];
+                const position = new THREE.Vector3(
+                    savedCube.position.x,
+                    savedCube.position.y,
+                    savedCube.position.z
+                );
+                createNewCube(position, savedCube.generation || 0);
+            }
+        }
+        
+        console.log(`Restored growth state: Generation ${cubeGrowthSystem.cubeGeneration}, ${cubeGrowthSystem.allCubes.length} cubes`);
+    } catch (error) {
+        console.error('Error restoring growth state:', error);
+    }
 }
 
 // Function to update all cube colors when emotional state changes
@@ -378,6 +457,16 @@ async function initAndLoadCube() {
                 cubeGrowthSystem.organismGroup.rotation.z = currentCubeData.rotation.z;
             }
             
+            // Apply loaded position if exists
+            if (currentCubeData.position) {
+                cubeGrowthSystem.organismGroup.position.x = currentCubeData.position.x;
+                cubeGrowthSystem.organismGroup.position.y = currentCubeData.position.y;
+                cubeGrowthSystem.organismGroup.position.z = currentCubeData.position.z;
+            }
+            
+            // Restore growth state (recreate additional cubes)
+            restoreGrowthState(currentCubeData);
+            
             console.log('Loaded existing cube from IndexedDB:', currentCubeData);
         } else {
             // No existing cube, create new one with emotional color
@@ -385,7 +474,15 @@ async function initAndLoadCube() {
                 position: { x: 0, y: 0, z: 0 },
                 rotation: { x: 0, y: 0, z: 0 },
                 created: new Date(),
-                name: `${Date.now()}`
+                name: `${Date.now()}`,
+                growthState: {
+                    generation: 0,
+                    totalCubes: 1,
+                    cubePositions: [{
+                        position: { x: 0, y: 0, z: 0 },
+                        generation: 0
+                    }]
+                }
             };
             
             // Apply emotional color to the cube
@@ -498,8 +595,26 @@ if (resetButton) {
             position: { x: 0, y: 0, z: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             created: new Date(),
-            name: `${Date.now()}`
+            name: `${Date.now()}`,
+            growthState: {
+                generation: 0,
+                totalCubes: 1,
+                cubePositions: [{
+                    position: { x: 0, y: 0, z: 0 },
+                    generation: 0
+                }]
+            }
         };
+        
+        // Reset growth system
+        cubeGrowthSystem.cubeGeneration = 0;
+        cubeGrowthSystem.hasGrown = false;
+        
+        // Remove all additional cubes, keep only the main cube
+        while (cubeGrowthSystem.allCubes.length > 1) {
+            const cubeToRemove = cubeGrowthSystem.allCubes.pop();
+            cubeGrowthSystem.organismGroup.remove(cubeToRemove.group);
+        }
         
         // Apply emotional color to the cube
         const initialColor = getEmotionalColor(cubePersonality.mood, cubeState);
@@ -1429,6 +1544,9 @@ function animate() {
     updateTrailEffect();
     updateLighting(); // Add lighting updates
     
+    // Track mouse interactions for cube growth
+    trackMouseInteractions();
+    
     // Calculate smoothing factors based on cube state
     let positionSmoothing = 0.02; // Reduced from 0.05
     let rotationSmoothing = 0.015; // Reduced from 0.03
@@ -1519,8 +1637,9 @@ function animate() {
         cubeGrowthSystem.organismGroup.rotation.z += movementRotationInfluence * 0.5; // Add some Z rotation for more dynamic movement
     }
     
-    // Update cube data periodically (every 60 frames ≈ 1 second)
+    // Auto-save cube data periodically (every 60 frames ≈ 1 second)
     if (frameCount % 60 === 0 && currentCubeData) {
+        // Update position and rotation
         currentCubeData.rotation = {
             x: cubeGrowthSystem.organismGroup.rotation.x,
             y: cubeGrowthSystem.organismGroup.rotation.y,
@@ -1531,8 +1650,24 @@ function animate() {
             y: cubeGrowthSystem.organismGroup.position.y,
             z: cubeGrowthSystem.organismGroup.position.z
         };
-        // Auto-save rotation data
+        
+        // Auto-save growth state including all cube positions
+        currentCubeData.growthState = {
+            generation: cubeGrowthSystem.cubeGeneration,
+            totalCubes: cubeGrowthSystem.allCubes.length,
+            cubePositions: cubeGrowthSystem.allCubes.map(cubeData => ({
+                position: {
+                    x: cubeData.group.position.x,
+                    y: cubeData.group.position.y,
+                    z: cubeData.group.position.z
+                },
+                generation: cubeData.generation
+            }))
+        };
+        
+        // Auto-save all data to IndexedDB
         cubeDB.updateCube(currentCubeData).catch(console.error);
+        
         // Update display
         updateDataDisplay();
     }
@@ -1574,6 +1709,29 @@ window.addEventListener('resize', () => {
     cubeGrowthSystem.organismGroup.position.set(0, 0, 0);
 });
 
+// Auto-save when user navigates away from the page
+window.addEventListener('beforeunload', () => {
+    if (currentCubeData) {
+        // Force immediate save of current state
+        saveGrowthState();
+    }
+});
+
+// Auto-save on page visibility changes (when user switches tabs)
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden && currentCubeData) {
+        // Page is being hidden, save current state
+        saveGrowthState();
+    }
+});
+
+// Auto-save at regular intervals (every 30 seconds)
+setInterval(() => {
+    if (currentCubeData) {
+        saveGrowthState();
+    }
+}, 30000); // 30 seconds
+
 // Start animation
 animate();
 
@@ -1590,9 +1748,15 @@ function trackMouseInteractions() {
         const interactionRange = 0.4; // Adjust this value to control interaction distance
         
         if (distanceFromCube <= interactionRange) {
+            const interactionDuration = currentTime - cubeGrowthSystem.interactionStartTime;
+            
+            // Debug logging
+            if (interactionDuration > 1000 && interactionDuration % 500 < 16) { // Log every 500ms
+                console.log(`Interaction duration: ${interactionDuration}ms, threshold: ${cubeGrowthSystem.growthThreshold}ms, hasGrown: ${cubeGrowthSystem.hasGrown}`);
+            }
+            
             // Check if interaction duration exceeds threshold and hasn't grown yet
-            if (currentTime - cubeGrowthSystem.interactionStartTime > cubeGrowthSystem.growthThreshold && 
-                !cubeGrowthSystem.hasGrown) {
+            if (interactionDuration > cubeGrowthSystem.growthThreshold && !cubeGrowthSystem.hasGrown) {
                 // Trigger cube growth (cell division)
                 triggerCubeGrowth();
             }
@@ -1609,36 +1773,16 @@ function trackMouseInteractions() {
 canvas.addEventListener('mousedown', () => {
     cubeGrowthSystem.isInteracting = true;
     cubeGrowthSystem.interactionStartTime = Date.now();
+    cubeGrowthSystem.hasGrown = false; // Reset growth flag when starting new interaction
 });
 
 // Event listener for mouse up (end interaction)
 canvas.addEventListener('mouseup', () => {
     cubeGrowthSystem.isInteracting = false;
     
-    // Check if growth occurred during interaction
-    if (cubeGrowthSystem.hasGrown) {
-        // Save the new cube state to IndexedDB
-        if (currentCubeData) {
-            currentCubeData.position = {
-                x: cubeGrowthSystem.organismGroup.position.x,
-                y: cubeGrowthSystem.organismGroup.position.y,
-                z: cubeGrowthSystem.organismGroup.position.z
-            };
-            cubeDB.updateCube(currentCubeData).catch(console.error);
-        }
-        
-        // Update display
+    // Auto-save growth state when interaction ends (regardless of growth)
+    if (currentCubeData) {
+        saveGrowthState();
         updateDataDisplay();
     }
 });
-
-// Update loop for tracking mouse interactions
-function update() {
-    requestAnimationFrame(update);
-    
-    // Track mouse interactions for cube growth
-    trackMouseInteractions();
-}
-
-// Start update loop
-update();
