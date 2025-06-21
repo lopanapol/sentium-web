@@ -39,9 +39,10 @@ function start --description "Start Python HTTP server in current directory"
     
     # Try Python 3 first, then Python 2 as fallback
     if command -v python3 >/dev/null 2>&1
-        python3 -m http.server $port
+        # Suppress broken pipe errors (harmless client disconnections)
+        python3 -m http.server $port 2>&1 | grep -v "BrokenPipeError" | grep -v "Exception occurred during processing"
     else if command -v python >/dev/null 2>&1
-        python -m SimpleHTTPServer $port
+        python -m SimpleHTTPServer $port 2>&1 | grep -v "BrokenPipeError" | grep -v "Exception occurred during processing"
     else
         echo "Error: Python not found. Please install Python to use this function."
         return 1

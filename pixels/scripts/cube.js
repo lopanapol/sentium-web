@@ -288,8 +288,10 @@ function updateDataDisplay() {
 
 initAndLoadCube();
 
-// Reset button functionality
-document.getElementById('reset-button').addEventListener('click', async () => {
+// Reset button functionality (only if button exists)
+const resetButton = document.getElementById('reset-button');
+if (resetButton) {
+    resetButton.addEventListener('click', async () => {
     try {
         // Clear all cube data from IndexedDB
         const allCubes = await cubeDB.getAllCubes();
@@ -328,7 +330,8 @@ document.getElementById('reset-button').addEventListener('click', async () => {
     } catch (error) {
         console.error('Error resetting cube data:', error);
     }
-});
+    });
+}
 
 // Add comprehensive lighting system
 const ambientLight = new THREE.AmbientLight(0x404040, 0.4); // Soft ambient light
