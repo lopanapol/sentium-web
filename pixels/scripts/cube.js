@@ -32,8 +32,8 @@ let cubeGrowthSystem = {
     growthThreshold: 1000, // 1 second in milliseconds (reduced from 2000)
     cubeGeneration: 0, // 0 = 1 cube, 1 = 2 cubes, 2 = 4 cubes, etc.
     allCubes: [], // Array to store all cube meshes
-    maxGeneration: 3, // Max 2^3 = 8 cubes (optimized for performance)
-    baseSize: 0.15, // Base cube size
+    maxGeneration: 0, // Will be set from saved data or randomly generated (2-20)
+    baseSize: 0, // Will be set from saved data or randomly generated (0.01-1.0)
     hasGrown: false, // Track if growth has occurred during current interaction
     lastGrowthTime: 0, // Prevent rapid successive growths
     growthCooldown: 500, // 0.5 second cooldown between growths (reduced from 1000)
@@ -105,7 +105,7 @@ function getEmotionalColor(mood, state) {
 }
 
 // Create cube geometry and materials (color will be set based on emotions)
-const geometry = new THREE.BoxGeometry(0.15, 0.15, 0.15); // 50% smaller cube (was 0.3)
+let geometry; // Will be created after baseSize is determined
 let material = new THREE.MeshPhongMaterial({ 
     color: 0xffffff, // Initial white, will be updated by emotions
     transparent: true,
@@ -118,9 +118,9 @@ let material = new THREE.MeshPhongMaterial({
 });
 
 // Create edges for outline (color will be set dynamically)
-const edges = new THREE.EdgesGeometry(geometry);
+let edges; // Will be created after geometry is determined
 let edgeMaterial = new THREE.LineBasicMaterial({ color: 0x000000 });
-let wireframe = new THREE.LineSegments(edges, edgeMaterial);
+let wireframe; // Will be created after edges are determined
 
 // Function to update edge color based on surface color
 function updateEdgeColor(surfaceColor) {
@@ -143,30 +143,11 @@ function updateEdgeColor(surfaceColor) {
 
 // Create cube group
 const cubeGroup = new THREE.Group();
-const cube = new THREE.Mesh(geometry, material);
-
-// Enable shadow casting and receiving
-cube.castShadow = true;
-cube.receiveShadow = true;
-
-cubeGroup.add(cube);
-cubeGroup.add(wireframe);
-cubeGroup.position.set(0, 0, 0);
+let cube; // Will be created after geometry is determined
 
 // Create the organism group that will contain all cubes as one body
 cubeGrowthSystem.organismGroup = new THREE.Group();
-cubeGrowthSystem.organismGroup.add(cubeGroup);
 scene.add(cubeGrowthSystem.organismGroup);
-
-// Initialize cubes array with the main cube
-cubeGrowthSystem.allCubes.push({
-    mesh: cube,
-    group: cubeGroup,
-    wireframe: wireframe,
-    targetPosition: new THREE.Vector3(0, 0, 0),
-    velocity: new THREE.Vector3(0, 0, 0),
-    generation: 0
-});
 
 // Function to create a new cube with the same appearance as the original
 function createNewCube(position, generation) {
@@ -429,19 +410,145 @@ function updateAllCubeColors(color) {
     });
 }
 
-// Function to update all cubes as one body
+// Function to update all cubes with Rubik's cube-style movement (1 move per 5 seconds)
 function updateCubeGroupMovement() {
-    // All cubes are now children of organismGroup, so they automatically move together
-    // No need for individual cube position updates - they stick together as one rigid body
+    const time = Date.now() * 0.001;
     
-    // Optional: Add slight organic breathing or pulse effect to the whole organism
-    if (cubeGrowthSystem.allCubes.length > 1) {
-        const time = Date.now() * 0.001;
-        const organicScale = 1 + Math.sin(time * 2) * 0.01; // Very subtle pulsing
-        cubeGrowthSystem.organismGroup.scale.setScalar(organicScale);
+    // 1 move per 5 seconds - slow, deliberate Rubik's cube movements
+    const movementCycle = time * 0.2; // 0.2 = 1 complete cycle per 5 seconds
+    
+    // Slow organism-wide movement while individual cubes move independently
+    const baseMovementIntensity = 0.03; // Reduced for more stable base movement
+    
+    // Gentle organism group movement
+    const organismMovement = new THREE.Vector3(
+        Math.sin(movementCycle * 0.6) * baseMovementIntensity,
+        Math.cos(movementCycle * 0.4) * baseMovementIntensity,
+        0
+    );
+    
+    // Apply base movement to organism group
+    cubeGrowthSystem.organismGroup.position.add(organismMovement.multiplyScalar(0.016));
+    
+    // Slow organism rotation
+    cubeGrowthSystem.organismGroup.rotation.y += Math.sin(time * 0.2) * 0.0008;
+    
+    // Individual cube movements - Rubik's cube style
+    cubeGrowthSystem.allCubes.forEach((cubeData, index) => {
+        const phaseOffset = index * 1.2; // More distinct phase differences for each cube
+        const rubikMovementIntensity = 0.08; // Individual cube movement range
         
-        // Optional: Very slight organic rotation for the whole organism
-        cubeGrowthSystem.organismGroup.rotation.z += Math.sin(time * 0.5) * 0.0005;
+        // Each cube has its own movement pattern based on emotional state
+        let individualMovement = new THREE.Vector3(0, 0, 0);
+        let rotationSpeed = { x: 0, y: 0, z: 0 };
+        
+        switch (cubeState) {
+            case 'excited':
+                // Excited cubes spin and move more dynamically like a scrambled Rubik's cube
+                individualMovement.x = Math.sin(movementCycle * 2 + phaseOffset) * rubikMovementIntensity * 1.5;
+                individualMovement.y = Math.cos(movementCycle * 1.8 + phaseOffset) * rubikMovementIntensity * 1.2;
+                individualMovement.z = Math.sin(movementCycle * 1.5 + phaseOffset) * rubikMovementIntensity * 0.8;
+                
+                rotationSpeed.x = 0.015 + Math.sin(time * 3 + phaseOffset) * 0.02;
+                rotationSpeed.y = 0.012 + Math.cos(time * 2.5 + phaseOffset) * 0.015;
+                rotationSpeed.z = 0.008 + Math.sin(time * 2 + phaseOffset) * 0.01;
+                break;
+                
+            case 'happy':
+                // Happy cubes do smooth, flowing rotations like solving a cube
+                individualMovement.x = Math.sin(movementCycle + phaseOffset) * rubikMovementIntensity;
+                individualMovement.y = Math.sin(movementCycle * 1.5 + phaseOffset) * rubikMovementIntensity * 0.8;
+                individualMovement.z = Math.cos(movementCycle * 0.8 + phaseOffset) * rubikMovementIntensity * 0.5;
+                
+                rotationSpeed.x = 0.008 + Math.sin(time * 2 + phaseOffset) * 0.01;
+                rotationSpeed.y = 0.01 + Math.cos(time * 1.8 + phaseOffset) * 0.012;
+                rotationSpeed.z = 0.006 + Math.sin(time * 1.5 + phaseOffset) * 0.008;
+                break;
+                
+            case 'curious':
+                // Curious cubes lean and tilt toward the cursor with individual rotations
+                const cursorInfluence = 0.05;
+                individualMovement.x = mouse.x * cursorInfluence + Math.sin(movementCycle * 1.2 + phaseOffset) * rubikMovementIntensity * 0.7;
+                individualMovement.y = mouse.y * cursorInfluence + Math.cos(movementCycle * 0.9 + phaseOffset) * rubikMovementIntensity * 0.7;
+                individualMovement.z = Math.sin(movementCycle * 0.6 + phaseOffset) * rubikMovementIntensity * 0.3;
+                
+                rotationSpeed.x = 0.006 + Math.sin(time * 1.5 + phaseOffset) * 0.008;
+                rotationSpeed.y = 0.008 + Math.cos(time * 1.2 + phaseOffset) * 0.01;
+                rotationSpeed.z = 0.004 + Math.sin(time * 1.8 + phaseOffset) * 0.006;
+                break;
+                
+            case 'playful':
+                // Playful cubes bounce and spin like playing with a Rubik's cube
+                individualMovement.x = Math.sin(movementCycle * 1.8 + phaseOffset) * rubikMovementIntensity * 1.3;
+                individualMovement.y = Math.abs(Math.sin(movementCycle * 2.2 + phaseOffset)) * rubikMovementIntensity;
+                individualMovement.z = Math.cos(movementCycle * 1.4 + phaseOffset) * rubikMovementIntensity * 0.6;
+                
+                rotationSpeed.x = 0.012 + Math.sin(time * 2.5 + phaseOffset) * 0.015;
+                rotationSpeed.y = 0.01 + Math.cos(time * 2.8 + phaseOffset) * 0.018;
+                rotationSpeed.z = 0.008 + Math.sin(time * 2.2 + phaseOffset) * 0.012;
+                break;
+                
+            case 'shy':
+                // Shy cubes move closer together with subtle, hesitant rotations
+                const centerPull = 0.02;
+                individualMovement.x = -cubeData.group.position.x * centerPull + Math.sin(movementCycle * 0.8 + phaseOffset) * rubikMovementIntensity * 0.4;
+                individualMovement.y = -cubeData.group.position.y * centerPull + Math.cos(movementCycle * 0.6 + phaseOffset) * rubikMovementIntensity * 0.4;
+                individualMovement.z = Math.sin(movementCycle * 0.4 + phaseOffset) * rubikMovementIntensity * 0.2;
+                
+                rotationSpeed.x = 0.003 + Math.sin(time * 0.8 + phaseOffset) * 0.004;
+                rotationSpeed.y = 0.004 + Math.cos(time * 0.6 + phaseOffset) * 0.005;
+                rotationSpeed.z = 0.002 + Math.sin(time * 1.0 + phaseOffset) * 0.003;
+                break;
+                
+            case 'idle':
+            default:
+                // Idle cubes do gentle, meditative rotations like slowly turning a solved cube
+                individualMovement.x = Math.sin(movementCycle * 0.9 + phaseOffset) * rubikMovementIntensity * 0.6;
+                individualMovement.y = Math.cos(movementCycle * 0.7 + phaseOffset) * rubikMovementIntensity * 0.5;
+                individualMovement.z = Math.sin(movementCycle * 0.5 + phaseOffset) * rubikMovementIntensity * 0.3;
+                
+                rotationSpeed.x = 0.005 + Math.sin(time * 1.0 + phaseOffset) * 0.006;
+                rotationSpeed.y = 0.004 + Math.cos(time * 0.8 + phaseOffset) * 0.007;
+                rotationSpeed.z = 0.003 + Math.sin(time * 1.2 + phaseOffset) * 0.005;
+                break;
+        }
+        
+        // Apply individual movement relative to target position
+        cubeData.group.position.copy(cubeData.targetPosition);
+        cubeData.group.position.add(individualMovement);
+        
+        // Apply Rubik's cube-style rotations - each cube rotates independently
+        cubeData.group.rotation.x += rotationSpeed.x;
+        cubeData.group.rotation.y += rotationSpeed.y;
+        cubeData.group.rotation.z += rotationSpeed.z;
+        
+        // Maintain loose formation - cubes can move more freely like Rubik's cube pieces
+        const maxDistance = 0.25; // Increased tolerance for more dynamic movement
+        const distanceFromTarget = cubeData.group.position.distanceTo(cubeData.targetPosition);
+        if (distanceFromTarget > maxDistance) {
+            // Gentle spring-back to maintain overall structure
+            const pullStrength = 0.05;
+            const direction = cubeData.targetPosition.clone().sub(cubeData.group.position).normalize();
+            cubeData.group.position.add(direction.multiplyScalar(pullStrength));
+        }
+        
+        // Keep individual cubes within reasonable bounds
+        const maxIndividualDistance = 0.4;
+        if (cubeData.group.position.length() > maxIndividualDistance) {
+            cubeData.group.position.normalize().multiplyScalar(maxIndividualDistance);
+        }
+    });
+    
+    // Keep the entire organism within screen bounds
+    const maxX = 0.6;
+    const maxY = 0.4;
+    cubeGrowthSystem.organismGroup.position.x = Math.max(-maxX, Math.min(maxX, cubeGrowthSystem.organismGroup.position.x));
+    cubeGrowthSystem.organismGroup.position.y = Math.max(-maxY, Math.min(maxY, cubeGrowthSystem.organismGroup.position.y));
+    
+    // Optional: Very subtle organism-wide breathing
+    if (cubeGrowthSystem.allCubes.length > 1) {
+        const breathingScale = 1 + Math.sin(time * 0.8) * 0.005; // Very gentle breathing
+        cubeGrowthSystem.organismGroup.scale.setScalar(breathingScale);
     }
 }
 
@@ -463,6 +570,22 @@ async function initAndLoadCube() {
             if (typeof currentCubeData.created === 'string') {
                 currentCubeData.created = new Date(currentCubeData.created);
             }
+            
+            // Use saved random values (they can't be changed for existing pets)
+            cubeGrowthSystem.maxGeneration = currentCubeData.genetics?.maxGeneration || Math.floor(Math.random() * 3) + 2; // Random 2-4
+            cubeGrowthSystem.baseSize = currentCubeData.genetics?.baseSize || Math.random() * 0.1 + 0.05; // Random 0.05-0.15
+            
+            // If genetics don't exist in saved data, save them now
+            if (!currentCubeData.genetics) {
+                currentCubeData.genetics = {
+                    maxGeneration: cubeGrowthSystem.maxGeneration,
+                    baseSize: cubeGrowthSystem.baseSize
+                };
+                await cubeDB.updateCube(currentCubeData);
+            }
+            
+            // Initialize the main cube with the determined size
+            initializeMainCube();
             
             // Set cube color based on initial emotional state
             const initialColor = getEmotionalColor(cubePersonality.mood, cubeState);
@@ -488,14 +611,24 @@ async function initAndLoadCube() {
             // Restore growth state (recreate additional cubes)
             restoreGrowthState(currentCubeData);
             
-            console.log('Loaded existing cube from IndexedDB:', currentCubeData);
+            console.log(`Loaded existing cube from IndexedDB. Max Gen: ${cubeGrowthSystem.maxGeneration}, Size: ${cubeGrowthSystem.baseSize.toFixed(3)}`, currentCubeData);
         } else {
-            // No existing cube, create new one with emotional color
+            // No existing cube, create new one with random genetics
+            cubeGrowthSystem.maxGeneration = Math.floor(Math.random() * 3) + 2; // Random 2-4 generations
+            cubeGrowthSystem.baseSize = Math.random() * 0.1 + 0.05; // Random 0.05-0.15 size
+            
+            // Initialize the main cube with the new random size
+            initializeMainCube();
+            
             currentCubeData = {
                 position: { x: 0, y: 0, z: 0 },
                 rotation: { x: 0, y: 0, z: 0 },
                 created: new Date(),
                 name: `${Date.now()}`,
+                genetics: {
+                    maxGeneration: cubeGrowthSystem.maxGeneration,
+                    baseSize: cubeGrowthSystem.baseSize
+                },
                 growthState: {
                     generation: 0,
                     totalCubes: 1,
@@ -515,7 +648,7 @@ async function initAndLoadCube() {
             
             // Save the new cube
             await cubeDB.saveCube(currentCubeData);
-            console.log('Created new cube and saved to IndexedDB:', currentCubeData);
+            console.log(`Created new cube with random genetics. Max Gen: ${cubeGrowthSystem.maxGeneration}, Size: ${cubeGrowthSystem.baseSize.toFixed(3)}`, currentCubeData);
         }
         
         updateDataDisplay();
@@ -590,74 +723,44 @@ function updateDataDisplay() {
         <div><strong>ID:</strong> ${currentCubeData.name}</div>
         <div><strong>Mood:</strong> ${getMoodDescription()}</div>
         <div><strong>State:</strong> ${getStateDescription()}</div>
+        <div><strong>Max Gen:</strong> ${cubeGrowthSystem.maxGeneration} (${Math.pow(2, cubeGrowthSystem.maxGeneration)} cubes)</div>
+        <div><strong>Size:</strong> ${cubeGrowthSystem.baseSize.toFixed(3)}</div>
         <div><strong>Born:</strong> ${formatCreatedDate(currentCubeData.created)}</div>
         <div><strong>Time:</strong> ${formatCreatedTime(currentCubeData.created)}</div>
         <div><strong>Age:</strong> ${calculateAge(currentCubeData.created)}</div>
     `;
 }
 
-initAndLoadCube();
-
-// Reset button functionality (only if button exists)
-const resetButton = document.getElementById('reset-button');
-if (resetButton) {
-    resetButton.addEventListener('click', async () => {
-    try {
-        // Clear all cube data from IndexedDB
-        const allCubes = await cubeDB.getAllCubes();
-        for (const cube of allCubes) {
-            await cubeDB.deleteCube(cube.id);
-        }
-        
-        console.log('IndexedDB cleared for this site');
-        
-        // Create a new cube with emotional color
-        currentCubeData = {
-            position: { x: 0, y: 0, z: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
-            created: new Date(),
-            name: `${Date.now()}`,
-            growthState: {
-                generation: 0,
-                totalCubes: 1,
-                cubePositions: [{
-                    position: { x: 0, y: 0, z: 0 },
-                    generation: 0
-                }]
-            }
-        };
-        
-        // Reset growth system
-        cubeGrowthSystem.cubeGeneration = 0;
-        cubeGrowthSystem.hasGrown = false;
-        
-        // Remove all additional cubes, keep only the main cube
-        while (cubeGrowthSystem.allCubes.length > 1) {
-            const cubeToRemove = cubeGrowthSystem.allCubes.pop();
-            cubeGrowthSystem.organismGroup.remove(cubeToRemove.group);
-        }
-        
-        // Apply emotional color to the cube
-        const initialColor = getEmotionalColor(cubePersonality.mood, cubeState);
-        currentEmotionalColor = initialColor;
-        targetEmotionalColor = initialColor;
-        cube.material.color.setHex(initialColor);
-        updateEdgeColor(initialColor);
-        
-        // Reset rotation
-        cubeGrowthSystem.organismGroup.rotation.set(0, 0, 0);
-        
-        // Save the new cube
-        await cubeDB.saveCube(currentCubeData);
-        
-        // Update display
-        updateDataDisplay();
-        
-        console.log('New cube created:', currentCubeData);
-        
-    } catch (error) {
-        console.error('Error resetting cube data:', error);
-    }
+// Function to initialize the main cube with the determined size
+function initializeMainCube() {
+    // Create geometry with the determined base size
+    geometry = new THREE.BoxGeometry(cubeGrowthSystem.baseSize, cubeGrowthSystem.baseSize, cubeGrowthSystem.baseSize);
+    
+    // Create cube mesh
+    cube = new THREE.Mesh(geometry, material);
+    cube.castShadow = true;
+    cube.receiveShadow = true;
+    
+    // Create wireframe
+    edges = new THREE.EdgesGeometry(geometry);
+    wireframe = new THREE.LineSegments(edges, edgeMaterial);
+    
+    // Add to cube group
+    cubeGroup.add(cube);
+    cubeGroup.add(wireframe);
+    cubeGroup.position.set(0, 0, 0);
+    
+    // Add cube group to organism
+    cubeGrowthSystem.organismGroup.add(cubeGroup);
+    
+    // Initialize cubes array with the main cube
+    cubeGrowthSystem.allCubes.push({
+        mesh: cube,
+        group: cubeGroup,
+        wireframe: wireframe,
+        targetPosition: new THREE.Vector3(0, 0, 0),
+        velocity: new THREE.Vector3(0, 0, 0),
+        generation: 0
     });
 }
 
@@ -738,7 +841,7 @@ function onMouseMove(event) {
     const mouseToCubeDistance = Math.sqrt(mouse.x * mouse.x + mouse.y * mouse.y);
     const interactionRange = 0.4; // Same range as in trackMouseInteractions
     
-    // Start interaction tracking only if mouse is close to cube
+    // Start interaction tracking only if mouse is close to the cube
     if (mouseToCubeDistance <= interactionRange) {
         if (!cubeGrowthSystem.isInteracting) {
             cubeGrowthSystem.isInteracting = true;
@@ -1020,13 +1123,18 @@ function updateBreathingAnimation() {
     const speed = breathingSpeed[cubeState] || 0.002;
     const breathTime = animationTime * speed;
     
-    // Complex breathing pattern - inhale and exhale with natural rhythm
-    const primaryBreath = Math.sin(breathTime) * breathingIntensity;
-    const secondaryBreath = Math.sin(breathTime * 1.3) * (breathingIntensity * 0.3);
-    const tertiaryBreath = Math.sin(breathTime * 2.1) * (breathingIntensity * 0.15);
-    
-    const totalBreathScale = 1 + primaryBreath + secondaryBreath + tertiaryBreath;
-    cubeGroup.scale.setScalar(totalBreathScale);
+    // Apply breathing to each cube individually for more organic effect
+    cubeGrowthSystem.allCubes.forEach((cubeData, index) => {
+        const phaseOffset = index * 0.3; // Each cube breathes slightly out of sync
+        
+        // Complex breathing pattern - inhale and exhale with natural rhythm
+        const primaryBreath = Math.sin(breathTime + phaseOffset) * breathingIntensity;
+        const secondaryBreath = Math.sin((breathTime + phaseOffset) * 1.3) * (breathingIntensity * 0.3);
+        const tertiaryBreath = Math.sin((breathTime + phaseOffset) * 2.1) * (breathingIntensity * 0.15);
+        
+        const totalBreathScale = 1 + primaryBreath + secondaryBreath + tertiaryBreath;
+        cubeData.group.scale.setScalar(totalBreathScale);
+    });
 }
 
 function updateGlowEffect() {
@@ -1882,6 +1990,9 @@ setInterval(() => {
     }
 }, 30000); // 30 seconds
 
+// Initialize and load cube data, then start animation
+initAndLoadCube();
+
 // Start animation
 animate();
 
@@ -1954,6 +2065,4 @@ canvas.addEventListener('mouseup', () => {
         updateDataDisplay();
     }
 });
-
-// Update mouse speed for creative mode detection
 
