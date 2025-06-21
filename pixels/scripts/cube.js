@@ -6,7 +6,7 @@ const scene = new THREE.Scene();
 const canvas = document.getElementById('three-canvas');
 
 // Use canvas dimensions for proper aspect ratio
-const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.01, 1000);
 const renderer = new THREE.WebGLRenderer({ 
     canvas: canvas,
     alpha: true,
@@ -640,7 +640,7 @@ if (resetButton) {
     });
 }
 
-// Add a subtle invisible ground plane for shadows
+// Add a subtle invisible ground plane for shadows (moved further down to avoid clipping)
 const groundGeometry = new THREE.PlaneGeometry(10, 10);
 const groundMaterial = new THREE.MeshPhongMaterial({ 
     color: 0x000000, 
@@ -650,7 +650,7 @@ const groundMaterial = new THREE.MeshPhongMaterial({
 });
 const ground = new THREE.Mesh(groundGeometry, groundMaterial);
 ground.rotation.x = -Math.PI / 2;
-ground.position.y = -1;
+ground.position.y = -3; // Moved further down from -1 to -3 to prevent clipping
 ground.receiveShadow = true;
 scene.add(ground);
 
@@ -666,12 +666,12 @@ mainLight.castShadow = true;
 // Configure shadow properties for better quality
 mainLight.shadow.mapSize.width = 1024;
 mainLight.shadow.mapSize.height = 1024;
-mainLight.shadow.camera.near = 0.5;
+mainLight.shadow.camera.near = 0.1;
 mainLight.shadow.camera.far = 50;
-mainLight.shadow.camera.left = -2;
-mainLight.shadow.camera.right = 2;
-mainLight.shadow.camera.top = 2;
-mainLight.shadow.camera.bottom = -2;
+mainLight.shadow.camera.left = -3;
+mainLight.shadow.camera.right = 3;
+mainLight.shadow.camera.top = 3;
+mainLight.shadow.camera.bottom = -4; // Extend bottom bounds to prevent shadow clipping
 mainLight.shadow.bias = -0.0001;
 
 scene.add(mainLight);
@@ -855,9 +855,9 @@ function updateConsciousBehavior() {
     const height = 2 * Math.tan(fov / 2) * distance;
     const width = height * (window.innerWidth / window.innerHeight);
     
-    // Use 80% of the visible area to keep cube on screen
-    const maxX = (width / 2) * 0.8;
-    const maxY = (height / 2) * 0.8;
+    // Use 70% of the visible area to keep cube on screen and avoid ground plane clipping
+    const maxX = (width / 2) * 0.7;
+    const maxY = (height / 2) * 0.7;
     
     switch (cubeState) {
         case 'curious':
@@ -1598,6 +1598,19 @@ function animate() {
     // Apply velocity to the organism group position (all cubes move together)
     cubeGrowthSystem.organismGroup.position.x += velocity.x;
     cubeGrowthSystem.organismGroup.position.y += velocity.y;
+    
+    // Safety constraints to prevent cube from going off-screen or clipping with ground plane
+    const safetyBounds = {
+        minY: -1.5,  // Prevent going too low and clipping with ground plane
+        maxY: 1.5,
+        minX: -2.0,
+        maxX: 2.0
+    };
+    
+    cubeGrowthSystem.organismGroup.position.x = Math.max(safetyBounds.minX, 
+        Math.min(safetyBounds.maxX, cubeGrowthSystem.organismGroup.position.x));
+    cubeGrowthSystem.organismGroup.position.y = Math.max(safetyBounds.minY, 
+        Math.min(safetyBounds.maxY, cubeGrowthSystem.organismGroup.position.y));
     
     // Smooth rotation speed changes with easing
     const rotationDelta = targetRotationSpeed - currentRotationSpeed;
