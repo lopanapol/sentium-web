@@ -723,8 +723,8 @@ function onMouseMove(event) {
     lastMouseMove = Date.now();
     mouseStillTime = 0;
     
-    // 🎭 UPDATE CREATIVE MODE SYSTEM
-    updateMouseSpeed(event);
+    // UPDATE DISCO SYSTEM
+    checkCursorOnCube(event);
     
     // Play subtle mouse movement sound occasionally
     if (Math.random() < 0.005 && window.retroAudio) {
@@ -733,7 +733,7 @@ function onMouseMove(event) {
     
     // Calculate distance from cube center for proximity detection
     const mouseToCubeDistance = Math.sqrt(mouse.x * mouse.x + mouse.y * mouse.y);
-    const interactionRange = 0.4; // Same range as in trackMouseInteractions
+    const interactionRange = 0.1; // Same range as in trackMouseInteractions
     
     // Start interaction tracking only if mouse is close to cube
     if (mouseToCubeDistance <= interactionRange) {
@@ -759,11 +759,11 @@ function onMouseMove(event) {
     consciousness.focus.y = mouse.y;
     
     // Gradual interest buildup - closer = more interested
-    if (distanceFromCube < 0.3) {
+    if (distanceFromCube < 0.1) {
         // Very close - high interest and excitement
         consciousness.interest = Math.min(consciousness.interest + 0.05, 1.0);
         cubePersonality.mood = Math.min(cubePersonality.mood + 0.02, 1.0);
-    } else if (distanceFromCube < 0.6) {
+    } else if (distanceFromCube < 0.2) {
         // Medium distance - moderate interest
         consciousness.interest = Math.min(consciousness.interest + 0.03, 0.8);
         cubePersonality.mood = Math.min(cubePersonality.mood + 0.01, 0.9);
@@ -1516,179 +1516,86 @@ const triggerCubeContactEffect = (cubeScreenX = window.innerWidth / 2, cubeScree
     }, 100);
 };
 
-// FUNNY FREE-FORM CREATIVE SYSTEM - No buttons needed!
-let creativeModeSystem = {
+// DISCO EFFECT SYSTEM - Activates only when cursor is on cube
+let discoSystem = {
     isActive: false,
-    creativeMode: 'normal', // normal, disco, silly, chaos, wizard, rainbow, party
-    lastModeChange: 0,
-    modeChangeCooldown: 3000,
-    mouseSpeedHistory: [],
-    maxSpeedHistory: 20,
-    crazyThreshold: 0.15,
-    stillnessTimer: 0,
-    magicCircleTime: 0,
     discoLights: [],
-    rainbowTrail: [],
-    partyConfetti: [],
-    sillyFaceTimer: 0
+    lastActivation: 0
 };
 
 // Mouse speed tracking for creative triggers
-function updateMouseSpeed(event) {
-    const currentTime = Date.now();
-    const speed = Math.sqrt(
-        Math.pow(event.movementX || 0, 2) + 
-        Math.pow(event.movementY || 0, 2)
-    );
+// Disco mode activation when cursor is on cube
+function checkCursorOnCube(event) {
+    // Get actual cube position in screen coordinates
+    const vector = new THREE.Vector3();
+    cubeGrowthSystem.organismGroup.getWorldPosition(vector);
+    vector.project(camera);
     
-    creativeModeSystem.mouseSpeedHistory.push({
-        speed: speed,
-        time: currentTime
-    });
+    // Convert cube's 3D position to screen coordinates
+    const rect = canvas.getBoundingClientRect();
+    const cubeScreenX = (vector.x * 0.5 + 0.5) * rect.width + rect.left;
+    const cubeScreenY = (vector.y * -0.5 + 0.5) * rect.height + rect.top;
     
-    // Keep only recent history
-    if (creativeModeSystem.mouseSpeedHistory.length > creativeModeSystem.maxSpeedHistory) {
-        creativeModeSystem.mouseSpeedHistory.shift();
-    }
+    // Calculate actual distance from cursor to cube in screen pixels
+    const dx = event.clientX - cubeScreenX;
+    const dy = event.clientY - cubeScreenY;
+    const pixelDistance = Math.sqrt(dx * dx + dy * dy);
     
-    // Calculate average speed
-    const recentSpeeds = creativeModeSystem.mouseSpeedHistory
-        .filter(s => currentTime - s.time < 500)
-        .map(s => s.speed);
+    // Contact detection based on cube size (approximately 30-40 pixels)
+    const cubeRadius = 35;
+    const isOnCube = pixelDistance < cubeRadius;
     
-    const avgSpeed = recentSpeeds.reduce((a, b) => a + b, 0) / recentSpeeds.length || 0;
-    
-    // CREATIVE MODE TRIGGERS - Different funny behaviors!
-    const timeSinceLastMode = currentTime - creativeModeSystem.lastModeChange;
-    
-    if (timeSinceLastMode > creativeModeSystem.modeChangeCooldown) {
-        // 1. CRAZY FAST MOUSE = DISCO PARTY MODE!
-        if (avgSpeed > creativeModeSystem.crazyThreshold) {
-            activateCreativeMode('disco');
-        }
-        // 2. MOUSE CIRCLES = WIZARD MAGIC MODE!
-        else if (detectMouseCircles()) {
-            activateCreativeMode('wizard');
-        }
-        // 3. MOUSE SHAKE = CHAOS MODE!
-        else if (detectMouseShake()) {
-            activateCreativeMode('chaos');
-        }
-        // 4. ZIGZAG PATTERN = SILLY FACE MODE!
-        else if (detectZigzagPattern()) {
-            activateCreativeMode('silly');
-        }
-        // 5. STAYING STILL TOO LONG = RAINBOW MEDITATION!
-        else if (avgSpeed < 0.01) {
-            creativeModeSystem.stillnessTimer += 16;
-            if (creativeModeSystem.stillnessTimer > 5000) { // 5 seconds still
-                activateCreativeMode('rainbow');
-                creativeModeSystem.stillnessTimer = 0;
-            }
-        } else {
-            creativeModeSystem.stillnessTimer = 0;
-        }
+    if (isOnCube && !discoSystem.isActive) {
+        activateDiscoMode();
+    } else if (!isOnCube && discoSystem.isActive) {
+        deactivateDiscoMode();
     }
 }
 
-// Detect mouse circle patterns for wizard mode
-function detectMouseCircles() {
-    if (creativeModeSystem.mouseSpeedHistory.length < 15) return false;
+// Activate disco mode
+function activateDiscoMode() {
+    if (discoSystem.isActive) return; // Already active
     
-    const recent = creativeModeSystem.mouseSpeedHistory.slice(-15);
-    const variations = recent.map((_, i) => {
-        if (i === 0) return 0;
-        return Math.abs(recent[i].speed - recent[i-1].speed);
-    });
+    discoSystem.isActive = true;
+    discoSystem.lastActivation = Date.now();
     
-    const avgVariation = variations.reduce((a, b) => a + b, 0) / variations.length;
-    return avgVariation > 2 && avgVariation < 8; // Consistent circular motion
-}
-
-// Detect zigzag mouse patterns for silly mode
-function detectZigzagPattern() {
-    if (creativeModeSystem.mouseSpeedHistory.length < 12) return false;
-    
-    const recent = creativeModeSystem.mouseSpeedHistory.slice(-12);
-    let directionChanges = 0;
-    let lastDirection = 0;
-    
-    for (let i = 1; i < recent.length; i++) {
-        const speedDiff = recent[i].speed - recent[i-1].speed;
-        const currentDirection = speedDiff > 0 ? 1 : -1;
-        
-        if (lastDirection !== 0 && currentDirection !== lastDirection) {
-            directionChanges++;
-        }
-        lastDirection = currentDirection;
-    }
-    
-    return directionChanges >= 6; // Lots of speed changes = zigzag pattern!
-}
-
-// Detect mouse shaking
-function detectMouseShake() {
-    if (creativeModeSystem.mouseSpeedHistory.length < 10) return false;
-    
-    const recent = creativeModeSystem.mouseSpeedHistory.slice(-10);
-    const speeds = recent.map(h => h.speed);
-    const maxSpeed = Math.max(...speeds);
-    const variations = speeds.filter(s => s > maxSpeed * 0.7).length;
-    
-    return variations >= 7 && maxSpeed > 5; // Lots of high-speed variations = shaking!
-}
-
-// Activate different creative modes
-function activateCreativeMode(mode) {
-    if (creativeModeSystem.creativeMode === mode) return; // Already in this mode
-    
-    creativeModeSystem.creativeMode = mode;
-    creativeModeSystem.lastModeChange = Date.now();
-    creativeModeSystem.isActive = true;
-    
-    console.log(`🎭 CREATIVE MODE ACTIVATED: ${mode.toUpperCase()}!`);
+    console.log("DISCO MODE ACTIVATED!");
     
     // Play mode activation sound
     if (window.retroAudio) {
         window.retroAudio.playCubeInteraction();
     }
     
-    // Mode-specific initialization
-    switch(mode) {
-        case 'disco':
-            initDiscoMode();
-            break;
-        case 'wizard':
-            initWizardMode();
-            break;
-        case 'silly':
-            initSillyMode();
-            break;
-        case 'chaos':
-            initChaosMode();
-            break;
-        case 'rainbow':
-            initRainbowMode();
-            break;
-        case 'party':
-            initPartyMode();
-            break;
-    }
+    // Initialize disco lights
+    initDiscoMode();
+}
+
+// Deactivate disco mode
+function deactivateDiscoMode() {
+    if (!discoSystem.isActive) return;
     
-    // Auto-return to normal after some time
-    setTimeout(() => {
-        if (creativeModeSystem.creativeMode === mode) {
-            returnToNormal();
-        }
-    }, 8000 + Math.random() * 5000); // 8-13 seconds of fun!
+    discoSystem.isActive = false;
+    
+    console.log("Disco mode deactivated");
+    
+    // Clean up disco lights
+    discoSystem.discoLights.forEach(light => scene.remove(light));
+    discoSystem.discoLights = [];
+    
+    // Reset cube properties
+    cubeGrowthSystem.allCubes.forEach(cubeData => {
+        cubeData.mesh.material.shininess = 80;
+        cubeData.mesh.material.specular.setHex(0x444444);
+        cubeData.mesh.material.emissiveIntensity = 0.2;
+    });
 }
 
 // DISCO MODE - Cube becomes a disco ball!
 function initDiscoMode() {
-    console.log("🕺 DISCO TIME! Cube is now a disco ball!");
+    console.log("DISCO TIME! Cube is now a disco ball!");
     
     // Create disco lights around the cube
-    creativeModeSystem.discoLights = [];
+    discoSystem.discoLights = [];
     const colors = [0xff0080, 0x00ff80, 0x8000ff, 0xff8000, 0x0080ff];
     
     for (let i = 0; i < 8; i++) {
@@ -1699,7 +1606,7 @@ function initDiscoMode() {
             Math.sin(angle) * 1.5,
             0.5
         );
-        creativeModeSystem.discoLights.push(light);
+        discoSystem.discoLights.push(light);
         scene.add(light);
     }
     
@@ -1711,216 +1618,15 @@ function initDiscoMode() {
     });
 }
 
-// WIZARD MODE - Magical sparkles and floating!
-function initWizardMode() {
-    console.log("🧙‍♂️ WIZARD MODE! Cube has magical powers!");
-    creativeModeSystem.magicCircleTime = Date.now();
-    
-    // Cube starts floating and glowing
-    cubeGrowthSystem.allCubes.forEach(cubeData => {
-        cubeData.mesh.material.emissive.setHex(0x4444ff);
-        cubeData.mesh.material.emissiveIntensity = 0.8;
-        cubeData.mesh.material.opacity = 0.9;
-    });
-    
-    // Create magic particle trail
-    creativeModeSystem.magicTrail = [];
-}
-
-// SILLY MODE - Cube makes funny faces and movements!
-function initSillyMode() {
-    console.log("🤪 SILLY MODE! Cube is being goofy!");
-    creativeModeSystem.sillyFaceTimer = Date.now();
-    
-    // Make cube do silly colors
-    cubeGrowthSystem.allCubes.forEach(cubeData => {
-        cubeData.mesh.material.color.setHex(0xff69b4); // Hot pink!
-    });
-}
-
-// CHAOS MODE - Everything goes crazy!
-function initChaosMode() {
-    console.log("🌪️ CHAOS MODE! Reality is breaking down!");
-    
-    // Spawn temporary chaos cubes
-    for (let i = 0; i < 5; i++) {
-        setTimeout(() => {
-            const chaosCube = createTempChaosElement();
-            scene.add(chaosCube);
-            
-            // Remove after 3 seconds
-            setTimeout(() => {
-                scene.remove(chaosCube);
-            }, 3000);
-        }, i * 200);
-    }
-}
-
-// RAINBOW MODE - Peaceful rainbow meditation
-function initRainbowMode() {
-    console.log("🌈 RAINBOW MODE! Peace and love, man...");
-    creativeModeSystem.rainbowTrail = [];
-    
-    // Soft rainbow glow
-    cubeGrowthSystem.allCubes.forEach(cubeData => {
-        cubeData.mesh.material.transparent = true;
-        cubeData.mesh.material.opacity = 0.8;
-    });
-}
-
-// PARTY MODE - Confetti and celebration!
-function initPartyMode() {
-    console.log("🎉 PARTY MODE! Let's celebrate!");
-    creativeModeSystem.partyConfetti = [];
-    
-    // Create confetti explosion
-    for (let i = 0; i < 20; i++) {
-        createConfettiPiece();
-    }
-}
-
-// Create temporary chaos elements
-function createTempChaosElement() {
-    const shapes = ['box', 'sphere', 'cone', 'cylinder'];
-    const shape = shapes[Math.floor(Math.random() * shapes.length)];
-    
-    let geometry;
-    switch(shape) {
-        case 'sphere':
-            geometry = new THREE.SphereGeometry(0.1, 8, 6);
-            break;
-        case 'cone':
-            geometry = new THREE.ConeGeometry(0.1, 0.2, 6);
-            break;
-        case 'cylinder':
-            geometry = new THREE.CylinderGeometry(0.05, 0.05, 0.2, 6);
-            break;
-        default:
-            geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-    }
-    
-    const material = new THREE.MeshPhongMaterial({
-        color: Math.random() * 0xffffff,
-        transparent: true,
-        opacity: 0.7
-    });
-    
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(
-        (Math.random() - 0.5) * 4,
-        (Math.random() - 0.5) * 3,
-        (Math.random() - 0.5) * 2
-    );
-    
-    // Add random rotation
-    mesh.rotation.set(
-        Math.random() * Math.PI,
-        Math.random() * Math.PI,
-        Math.random() * Math.PI
-    );
-    
-    // Add floating animation
-    mesh.userData = {
-        originalY: mesh.position.y,
-        floatSpeed: 0.5 + Math.random() * 1.5,
-        rotationSpeed: (Math.random() - 0.5) * 0.1
-    };
-    
-    return mesh;
-}
-
-// Create confetti pieces
-function createConfettiPiece() {
-    const colors = [0xff6b6b, 0x4ecdc4, 0x45b7d1, 0xf9ca24, 0xf0932b, 0xeb4d4b];
-    const geometry = new THREE.PlaneGeometry(0.05, 0.05);
-    const material = new THREE.MeshBasicMaterial({
-        color: colors[Math.floor(Math.random() * colors.length)],
-        transparent: true,
-        opacity: 0.8
-    });
-    
-    const confetti = new THREE.Mesh(geometry, material);
-    confetti.position.copy(cubeGrowthSystem.organismGroup.position);
-    confetti.position.x += (Math.random() - 0.5) * 0.5;
-    confetti.position.y += (Math.random() - 0.5) * 0.5;
-    confetti.position.z += (Math.random() - 0.5) * 0.5;
-    
-    confetti.userData = {
-        velocity: new THREE.Vector3(
-            (Math.random() - 0.5) * 0.02,
-            Math.random() * 0.02,
-            (Math.random() - 0.5) * 0.02
-        ),
-        life: 1.0,
-        rotationSpeed: (Math.random() - 0.5) * 0.2
-    };
-    
-    creativeModeSystem.partyConfetti.push(confetti);
-    scene.add(confetti);
-}
-
-// Return to normal mode
-function returnToNormal() {
-    console.log("😌 Returning to normal mode...");
-    
-    // Clean up mode-specific elements
-    switch(creativeModeSystem.creativeMode) {
-        case 'disco':
-            creativeModeSystem.discoLights.forEach(light => scene.remove(light));
-            creativeModeSystem.discoLights = [];
-            break;
-        case 'party':
-            creativeModeSystem.partyConfetti.forEach(confetti => scene.remove(confetti));
-            creativeModeSystem.partyConfetti = [];
-            break;
-    }
-    
-    // Reset cube properties
-    cubeGrowthSystem.allCubes.forEach(cubeData => {
-        cubeData.mesh.material.shininess = 80;
-        cubeData.mesh.material.specular.setHex(0x444444);
-        cubeData.mesh.material.emissiveIntensity = 0.2;
-        cubeData.mesh.material.opacity = 0.8;
-        cubeData.mesh.material.transparent = true;
-    });
-    
-    creativeModeSystem.creativeMode = 'normal';
-    creativeModeSystem.isActive = false;
-}
-
-// Update creative mode behaviors in animation loop
-function updateCreativeModes() {
-    if (!creativeModeSystem.isActive) return;
+// Update disco mode animation
+function updateDiscoMode() {
+    if (!discoSystem.isActive) return;
     
     const time = Date.now() * 0.001;
     
-    switch(creativeModeSystem.creativeMode) {
-        case 'disco':
-            updateDiscoMode(time);
-            break;
-        case 'wizard':
-            updateWizardMode(time);
-            break;
-        case 'silly':
-            updateSillyMode(time);
-            break;
-        case 'chaos':
-            updateChaosMode(time);
-            break;
-        case 'rainbow':
-            updateRainbowMode(time);
-            break;
-        case 'party':
-            updatePartyMode(time);
-            break;
-    }
-}
-
-// Update specific creative modes
-function updateDiscoMode(time) {
     // Rotate disco lights
-    creativeModeSystem.discoLights.forEach((light, i) => {
-        const angle = time * 2 + (i / creativeModeSystem.discoLights.length) * Math.PI * 2;
+    discoSystem.discoLights.forEach((light, i) => {
+        const angle = time * 2 + (i / discoSystem.discoLights.length) * Math.PI * 2;
         light.position.x = Math.cos(angle) * 1.5;
         light.position.y = Math.sin(angle) * 1.5;
         light.intensity = 0.5 + Math.sin(time * 10 + i) * 0.5;
@@ -1937,150 +1643,10 @@ function updateDiscoMode(time) {
     });
 }
 
-function updateWizardMode(time) {
-    // Floating magic movement
-    const magicFloat = Math.sin(time * 3) * 0.3;
-    cubeGrowthSystem.organismGroup.position.y += magicFloat * 0.01;
-    
-    // Magic sparkle color cycling
-    const hue = (time * 0.5) % 1;
-    const magicColor = new THREE.Color().setHSL(hue, 0.8, 0.6);
-    cubeGrowthSystem.allCubes.forEach(cubeData => {
-        cubeData.mesh.material.color.copy(magicColor);
-        cubeData.mesh.material.emissive.copy(magicColor);
-    });
-    
-    // Create magic particles occasionally
-    if (Math.random() < 0.1) {
-        createMagicParticle();
-    }
-}
 
-function updateSillyMode(time) {
-    // Silly bouncing
-    const bounce = Math.abs(Math.sin(time * 8)) * 0.2;
-    cubeGrowthSystem.organismGroup.scale.y = 1 + bounce;
-    cubeGrowthSystem.organismGroup.scale.x = 1 - bounce * 0.3;
-    cubeGrowthSystem.organismGroup.scale.z = 1 - bounce * 0.3;
-    
-    // Silly color flashing
-    const sillyColors = [0xff69b4, 0x00ff00, 0xff4500, 0x9400d3];
-    const colorIndex = Math.floor(time * 4) % sillyColors.length;
-    cubeGrowthSystem.allCubes.forEach(cubeData => {
-        cubeData.mesh.material.color.setHex(sillyColors[colorIndex]);
-    });
-    
-    // Silly wiggle rotation
-    cubeGrowthSystem.organismGroup.rotation.z = Math.sin(time * 10) * 0.3;
-}
 
-function updateChaosMode(time) {
-    // Chaotic movement
-    cubeGrowthSystem.organismGroup.position.x += (Math.random() - 0.5) * 0.05;
-    cubeGrowthSystem.organismGroup.position.y += (Math.random() - 0.5) * 0.05;
-    
-    // Chaotic colors
-    cubeGrowthSystem.allCubes.forEach(cubeData => {
-        if (Math.random() < 0.3) {
-            cubeData.mesh.material.color.setHex(Math.random() * 0xffffff);
-        }
-    });
-    
-    // Chaotic scaling
-    const chaosScale = 1 + Math.sin(time * 20) * 0.2;
-    cubeGrowthSystem.organismGroup.scale.setScalar(chaosScale);
-}
+// Update specific creative modes
 
-function updateRainbowMode(time) {
-    // Peaceful rainbow cycling
-    const rainbowHue = (time * 0.2) % 1;
-    const rainbowColor = new THREE.Color().setHSL(rainbowHue, 0.7, 0.7);
-    
-    cubeGrowthSystem.allCubes.forEach(cubeData => {
-        cubeData.mesh.material.color.copy(rainbowColor);
-        cubeData.mesh.material.emissive.copy(rainbowColor);
-        cubeData.mesh.material.emissiveIntensity = 0.3;
-    });
-    
-    // Gentle floating
-    const gentleFloat = Math.sin(time * 1.5) * 0.1;
-    cubeGrowthSystem.organismGroup.position.y += gentleFloat * 0.005;
-    
-    // Soft rotation
-    cubeGrowthSystem.organismGroup.rotation.y += 0.01;
-}
-
-function updatePartyMode(time) {
-    // Update confetti
-    creativeModeSystem.partyConfetti = creativeModeSystem.partyConfetti.filter(confetti => {
-        confetti.userData.life -= 0.02;
-        confetti.material.opacity = confetti.userData.life;
-        
-        // Apply physics
-        confetti.position.add(confetti.userData.velocity);
-        confetti.userData.velocity.y -= 0.001; // Gravity
-        confetti.rotation.z += confetti.userData.rotationSpeed;
-        
-        if (confetti.userData.life <= 0) {
-            scene.remove(confetti);
-            return false;
-        }
-        return true;
-    });
-    
-    // Party cube celebration dance
-    const danceMove = Math.sin(time * 6) * 0.2;
-    cubeGrowthSystem.organismGroup.rotation.z = danceMove;
-    cubeGrowthSystem.organismGroup.scale.setScalar(1 + Math.abs(danceMove) * 0.5);
-    
-    // Party colors
-    const partyColors = [0xff6b6b, 0x4ecdc4, 0x45b7d1, 0xf9ca24];
-    const partyColorIndex = Math.floor(time * 3) % partyColors.length;
-    cubeGrowthSystem.allCubes.forEach(cubeData => {
-        cubeData.mesh.material.color.setHex(partyColors[partyColorIndex]);
-    });
-}
-
-// Create magic particles for wizard mode
-function createMagicParticle() {
-    const geometry = new THREE.SphereGeometry(0.02, 6, 4);
-    const material = new THREE.MeshBasicMaterial({
-        color: 0x4444ff,
-        transparent: true,
-        opacity: 0.8
-    });
-    
-    const particle = new THREE.Mesh(geometry, material);
-    particle.position.copy(cubeGrowthSystem.organismGroup.position);
-    particle.position.x += (Math.random() - 0.5) * 0.5;
-    particle.position.y += (Math.random() - 0.5) * 0.5;
-    particle.position.z += (Math.random() - 0.5) * 0.5;
-    
-    particle.userData = {
-        velocity: new THREE.Vector3(
-            (Math.random() - 0.5) * 0.01,
-            Math.random() * 0.02,
-            (Math.random() - 0.5) * 0.01
-        ),
-        life: 1.0
-    };
-    
-    scene.add(particle);
-    
-    // Animate magic particle
-    const animateParticle = () => {
-        particle.userData.life -= 0.03;
-        particle.material.opacity = particle.userData.life;
-        particle.position.add(particle.userData.velocity);
-        
-        if (particle.userData.life > 0) {
-            requestAnimationFrame(animateParticle);
-        } else {
-            scene.remove(particle);
-        }
-    };
-    animateParticle();
-}
 
 // Animation loop with consciousness
 function animate() {
@@ -2102,8 +1668,8 @@ function animate() {
     updateTrailEffect();
     updateLighting(); // Add lighting updates
     
-    // 🎭 UPDATE CREATIVE MODES
-    updateCreativeModes();
+    // UPDATE DISCO MODE
+    updateDiscoMode();
     
     // Track mouse interactions for cube growth
     trackMouseInteractions();
@@ -2359,7 +1925,7 @@ canvas.addEventListener('mousedown', () => {
     cubeGrowthSystem.interactionStartTime = Date.now();
     cubeGrowthSystem.hasGrown = false; // Reset growth flag when starting new interaction
     
-    // 🎭 TRACK CLICKS FOR SILLY MODE
+    // TRACK CLICKS FOR SILLY MODE
     clickHistory.push(Date.now());
     
     // Play interaction start sound
@@ -2380,4 +1946,4 @@ canvas.addEventListener('mouseup', () => {
 });
 
 // Update mouse speed for creative mode detection
-canvas.addEventListener('mousemove', updateMouseSpeed);
+
