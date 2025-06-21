@@ -843,6 +843,52 @@ canvas.addEventListener('mousemove', onMouseMove);
 canvas.addEventListener('mouseenter', onMouseEnter);
 canvas.addEventListener('mouseleave', onMouseLeave);
 
+// Touch event support for mobile devices
+let currentTouch = null;
+
+function onTouchStart(event) {
+    event.preventDefault();
+    if (event.touches.length === 1) {
+        currentTouch = event.touches[0];
+        // Simulate mouse enter
+        onMouseEnter();
+        // Simulate mouse move with touch position
+        const touchEvent = {
+            clientX: currentTouch.clientX,
+            clientY: currentTouch.clientY
+        };
+        onMouseMove(touchEvent);
+    }
+}
+
+function onTouchMove(event) {
+    event.preventDefault();
+    if (event.touches.length === 1 && currentTouch) {
+        currentTouch = event.touches[0];
+        // Simulate mouse move with touch position
+        const touchEvent = {
+            clientX: currentTouch.clientX,
+            clientY: currentTouch.clientY
+        };
+        onMouseMove(touchEvent);
+    }
+}
+
+function onTouchEnd(event) {
+    event.preventDefault();
+    if (event.touches.length === 0) {
+        currentTouch = null;
+        // Simulate mouse leave
+        onMouseLeave();
+    }
+}
+
+// Add touch event listeners for mobile support
+canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+canvas.addEventListener('touchend', onTouchEnd, { passive: false });
+canvas.addEventListener('touchcancel', onTouchEnd, { passive: false });
+
 // Set enhanced cursor style with visibility improvements
 canvas.style.cursor = 'none'; // Hide default cursor to replace with custom one
 
@@ -987,6 +1033,35 @@ const createCustomCursor = () => {
     
     // Add mouse listeners for cursor
     document.addEventListener('mousemove', updateCursorPosition);
+    
+    // Add touch listeners for mobile support
+    document.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            const touchEvent = {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            };
+            updateCursorPosition(touchEvent);
+            customCursor.style.opacity = '1';
+        }
+    }, { passive: false });
+    
+    document.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            const touchEvent = {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            };
+            updateCursorPosition(touchEvent);
+            customCursor.style.opacity = '1';
+        }
+    }, { passive: false });
+    
+    document.addEventListener('touchend', () => {
+        customCursor.style.opacity = '0';
+    }, { passive: false });
     
     // Hide custom cursor when leaving canvas
     canvas.addEventListener('mouseleave', () => {

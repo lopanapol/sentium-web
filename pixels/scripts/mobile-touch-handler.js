@@ -23,8 +23,8 @@
     }, { passive: false });
     
     document.addEventListener('touchend', function(e) {
-      // Only prevent if it was a multi-touch
-      if (e.touches.length > 0) {
+      // Only prevent multi-touch gestures, allow single touch interactions
+      if (e.touches.length > 1) {
         e.preventDefault();
       }
     }, { passive: false });

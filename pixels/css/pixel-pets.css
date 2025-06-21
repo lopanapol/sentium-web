@@ -208,3 +208,62 @@ input, button, select, textarea {
   0% { transform: translate(-50%, -50%) scale(1.0); opacity: 0.4; }
   100% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.6; }
 }
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  .header-section {
+    top: 1rem;
+    left: 1rem;
+  }
+  
+  .title {
+    font-size: 28px;
+  }
+  
+  .subtitle {
+    font-size: 0.8rem;
+  }
+  
+  .data-display {
+    bottom: 1rem;
+    left: 1rem;
+    padding: 0.8rem;
+    max-width: 250px;
+    font-size: 0.8rem;
+  }
+  
+  #cube-info {
+    font-size: 0.7rem;
+  }
+  
+  .reset-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    margin-top: 0.6rem;
+  }
+}
+
+/* Touch-specific improvements */
+.mobile-device #three-canvas {
+  /* Ensure touch events work properly */
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Custom cursor visibility on touch devices */
+.mobile-device #custom-cursor {
+  /* Make cursor visible during touch interactions */
+  transition: opacity 0.1s ease;
+}
+
+/* Improve button interaction on mobile */
+.mobile-device .reset-btn {
+  min-height: 44px; /* iOS recommended touch target size */
+  min-width: 44px;
+  touch-action: manipulation;
+}
