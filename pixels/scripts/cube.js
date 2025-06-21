@@ -32,7 +32,7 @@ let cubeGrowthSystem = {
     growthThreshold: 1000, // 1 second in milliseconds (reduced from 2000)
     cubeGeneration: 0, // 0 = 1 cube, 1 = 2 cubes, 2 = 4 cubes, etc.
     allCubes: [], // Array to store all cube meshes
-    maxGeneration: 6, // Max 2^6 = 64 cubes
+    maxGeneration: 3, // Max 2^3 = 8 cubes (optimized for performance)
     baseSize: 0.15, // Base cube size
     hasGrown: false, // Track if growth has occurred during current interaction
     lastGrowthTime: 0, // Prevent rapid successive growths
