@@ -1570,13 +1570,13 @@ function updateMouseSpeed(event) {
         else if (detectMouseCircles()) {
             activateCreativeMode('wizard');
         }
-        // 3. RAPID CLICKS = SILLY FACE MODE!
-        else if (detectRapidClicks()) {
-            activateCreativeMode('silly');
-        }
-        // 4. MOUSE SHAKE = CHAOS MODE!
+        // 3. MOUSE SHAKE = CHAOS MODE!
         else if (detectMouseShake()) {
             activateCreativeMode('chaos');
+        }
+        // 4. ZIGZAG PATTERN = SILLY FACE MODE!
+        else if (detectZigzagPattern()) {
+            activateCreativeMode('silly');
         }
         // 5. STAYING STILL TOO LONG = RAINBOW MEDITATION!
         else if (avgSpeed < 0.01) {
@@ -1605,12 +1605,25 @@ function detectMouseCircles() {
     return avgVariation > 2 && avgVariation < 8; // Consistent circular motion
 }
 
-// Detect rapid clicking
-let clickHistory = [];
-function detectRapidClicks() {
-    const currentTime = Date.now();
-    clickHistory = clickHistory.filter(time => currentTime - time < 2000); // Last 2 seconds
-    return clickHistory.length >= 5; // 5 clicks in 2 seconds = silly mode!
+// Detect zigzag mouse patterns for silly mode
+function detectZigzagPattern() {
+    if (creativeModeSystem.mouseSpeedHistory.length < 12) return false;
+    
+    const recent = creativeModeSystem.mouseSpeedHistory.slice(-12);
+    let directionChanges = 0;
+    let lastDirection = 0;
+    
+    for (let i = 1; i < recent.length; i++) {
+        const speedDiff = recent[i].speed - recent[i-1].speed;
+        const currentDirection = speedDiff > 0 ? 1 : -1;
+        
+        if (lastDirection !== 0 && currentDirection !== lastDirection) {
+            directionChanges++;
+        }
+        lastDirection = currentDirection;
+    }
+    
+    return directionChanges >= 6; // Lots of speed changes = zigzag pattern!
 }
 
 // Detect mouse shaking
