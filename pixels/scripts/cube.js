@@ -405,6 +405,9 @@ function restoreGrowthState(cubeData) {
 
 // Function to update all cube colors when emotional state changes
 function updateAllCubeColors(color) {
+    // Don't update colors if disco mode is active
+    if (discoSystem.isActive) return;
+    
     cubeGrowthSystem.allCubes.forEach(cubeData => {
         cubeData.mesh.material.color.setHex(color);
         
@@ -733,7 +736,7 @@ function onMouseMove(event) {
     
     // Calculate distance from cube center for proximity detection
     const mouseToCubeDistance = Math.sqrt(mouse.x * mouse.x + mouse.y * mouse.y);
-    const interactionRange = 0.1; // Same range as in trackMouseInteractions
+    const interactionRange = 0.4; // Same range as in trackMouseInteractions
     
     // Start interaction tracking only if mouse is close to cube
     if (mouseToCubeDistance <= interactionRange) {
@@ -1523,6 +1526,9 @@ let discoSystem = {
     lastActivation: 0
 };
 
+// Click history for tracking interactions
+let clickHistory = [];
+
 // Mouse speed tracking for creative triggers
 // Disco mode activation when cursor is on cube
 function checkCursorOnCube(event) {
@@ -1582,11 +1588,15 @@ function deactivateDiscoMode() {
     discoSystem.discoLights.forEach(light => scene.remove(light));
     discoSystem.discoLights = [];
     
-    // Reset cube properties
+    // Reset cube properties to normal emotional colors
     cubeGrowthSystem.allCubes.forEach(cubeData => {
         cubeData.mesh.material.shininess = 80;
         cubeData.mesh.material.specular.setHex(0x444444);
         cubeData.mesh.material.emissiveIntensity = 0.2;
+        
+        // Restore normal emotional color instead of keeping disco colors
+        const currentEmotionalColor = getEmotionalColor(cubePersonality.mood, cubeState);
+        cubeData.mesh.material.color.setHex(currentEmotionalColor);
     });
 }
 
@@ -1636,7 +1646,7 @@ function updateDiscoMode() {
     cubeGrowthSystem.organismGroup.rotation.y += 0.1;
     cubeGrowthSystem.organismGroup.rotation.x += 0.05;
     
-    // Disco colors
+    // Disco colors - only when disco is active
     const discoColor = Math.floor(time * 5) % 2 === 0 ? 0xff00ff : 0x00ffff;
     cubeGrowthSystem.allCubes.forEach(cubeData => {
         cubeData.mesh.material.color.setHex(discoColor);
@@ -1900,9 +1910,9 @@ function trackMouseInteractions() {
                 window.retroAudio.playCubeInteraction();
             }
             
-            // Debug logging
-            if (interactionDuration > 1000 && interactionDuration % 500 < 16) { // Log every 500ms
-                console.log(`Interaction duration: ${interactionDuration}ms, threshold: ${cubeGrowthSystem.growthThreshold}ms, hasGrown: ${cubeGrowthSystem.hasGrown}`);
+            // Debug logging - more frequent
+            if (interactionDuration > 500 && interactionDuration % 200 < 16) { // Log every 200ms
+                console.log(`Interaction: ${Math.floor(interactionDuration/100)/10}s / ${cubeGrowthSystem.growthThreshold/1000}s - Distance: ${distanceFromCube.toFixed(2)} - HasGrown: ${cubeGrowthSystem.hasGrown}`);
             }
             
             // Check if interaction duration exceeds threshold and hasn't grown yet
