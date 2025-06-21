@@ -25,6 +25,21 @@ renderer.setClearColor(0x000000, 0); // Transparent background
 const cubeDB = new CubeDB();
 let currentCubeData = null;
 
+// CUBE GROWTH SYSTEM - Cell Division Implementation
+let cubeGrowthSystem = {
+    isInteracting: false,
+    interactionStartTime: 0,
+    growthThreshold: 2000, // 2 seconds in milliseconds
+    cubeGeneration: 0, // 0 = 1 cube, 1 = 2 cubes, 2 = 4 cubes, etc.
+    allCubes: [], // Array to store all cube meshes
+    maxGeneration: 6, // Max 2^6 = 64 cubes
+    baseSize: 0.15, // Base cube size
+    hasGrown: false, // Track if growth has occurred during current interaction
+    lastGrowthTime: 0, // Prevent rapid successive growths
+    growthCooldown: 1000, // 1 second cooldown between growths
+    organismGroup: null // Single group that contains all cubes as one organism
+};
+
 // Consciousness simulation variables (initialize early)
 const mouse = new THREE.Vector2();
 const cubePersonality = {
@@ -137,21 +152,198 @@ cube.receiveShadow = true;
 cubeGroup.add(cube);
 cubeGroup.add(wireframe);
 cubeGroup.position.set(0, 0, 0);
-scene.add(cubeGroup);
 
-// Add a subtle invisible ground plane for shadows
-const groundGeometry = new THREE.PlaneGeometry(10, 10);
-const groundMaterial = new THREE.MeshPhongMaterial({ 
-    color: 0x000000, 
-    transparent: true, 
-    opacity: 0,
-    side: THREE.DoubleSide
+// Create the organism group that will contain all cubes as one body
+cubeGrowthSystem.organismGroup = new THREE.Group();
+cubeGrowthSystem.organismGroup.add(cubeGroup);
+scene.add(cubeGrowthSystem.organismGroup);
+
+// Initialize cubes array with the main cube
+cubeGrowthSystem.allCubes.push({
+    mesh: cube,
+    group: cubeGroup,
+    wireframe: wireframe,
+    targetPosition: new THREE.Vector3(0, 0, 0),
+    velocity: new THREE.Vector3(0, 0, 0),
+    generation: 0
 });
-const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-ground.rotation.x = -Math.PI / 2;
-ground.position.y = -1;
-ground.receiveShadow = true;
-scene.add(ground);
+
+// Function to create a new cube with the same appearance as the original
+function createNewCube(position, generation) {
+    const newGeometry = new THREE.BoxGeometry(
+        cubeGrowthSystem.baseSize, 
+        cubeGrowthSystem.baseSize, 
+        cubeGrowthSystem.baseSize
+    );
+    
+    const newMaterial = new THREE.MeshPhongMaterial({ 
+        color: cube.material.color.getHex(),
+        transparent: true,
+        opacity: 0.8,
+        side: THREE.DoubleSide,
+        shininess: 80,
+        specular: 0x444444,
+        emissive: 0x111111,
+        emissiveIntensity: 0.2
+    });
+    
+    const newCube = new THREE.Mesh(newGeometry, newMaterial);
+    newCube.castShadow = true;
+    newCube.receiveShadow = true;
+    
+    // Create wireframe for the new cube
+    const newEdges = new THREE.EdgesGeometry(newGeometry);
+    const newEdgeMaterial = new THREE.LineBasicMaterial({ 
+        color: wireframe.material.color.getHex()
+    });
+    const newWireframe = new THREE.LineSegments(newEdges, newEdgeMaterial);
+    
+    // Create group for the new cube
+    const newCubeGroup = new THREE.Group();
+    newCubeGroup.add(newCube);
+    newCubeGroup.add(newWireframe);
+    newCubeGroup.position.copy(position);
+    
+    // Add to the organism group instead of scene - this makes them move as one body
+    cubeGrowthSystem.organismGroup.add(newCubeGroup);
+    
+    // Add to cubes array
+    cubeGrowthSystem.allCubes.push({
+        mesh: newCube,
+        group: newCubeGroup,
+        wireframe: newWireframe,
+        targetPosition: position.clone(),
+        velocity: new THREE.Vector3(0, 0, 0),
+        generation: generation
+    });
+    
+    return newCubeGroup;
+}
+
+// Function to trigger cube growth (cell division)
+function triggerCubeGrowth() {
+    const currentTime = Date.now();
+    
+    // Check cooldown
+    if (currentTime - cubeGrowthSystem.lastGrowthTime < cubeGrowthSystem.growthCooldown) {
+        return;
+    }
+    
+    // Check if we've reached max generation
+    if (cubeGrowthSystem.cubeGeneration >= cubeGrowthSystem.maxGeneration) {
+        return;
+    }
+    
+    const currentCubeCount = cubeGrowthSystem.allCubes.length;
+    const targetCubeCount = Math.pow(2, cubeGrowthSystem.cubeGeneration + 1);
+    
+    // Create new cubes to reach the target count (connected as one body)
+    for (let i = currentCubeCount; i < targetCubeCount; i++) {
+        // Find a parent cube to attach to (prefer most recent ones)
+        const parentIndex = Math.floor((i - 1) / 2); // Binary tree structure
+        const parentCube = cubeGrowthSystem.allCubes[parentIndex];
+        
+        // Calculate position adjacent to parent cube (touching sides)
+        const cubeSize = cubeGrowthSystem.baseSize;
+        const directions = [
+            new THREE.Vector3(cubeSize, 0, 0),      // Right
+            new THREE.Vector3(-cubeSize, 0, 0),     // Left
+            new THREE.Vector3(0, cubeSize, 0),      // Up
+            new THREE.Vector3(0, -cubeSize, 0),     // Down
+            new THREE.Vector3(0, 0, cubeSize),      // Front
+            new THREE.Vector3(0, 0, -cubeSize)      // Back
+        ];
+        
+        // Find the best direction that doesn't overlap with existing cubes
+        let bestPosition = null;
+        let minDistance = Infinity;
+        
+        for (const direction of directions) {
+            const testPosition = parentCube.group.position.clone().add(direction);
+            
+            // Check if this position is too close to existing cubes
+            let tooClose = false;
+            let totalDistance = 0;
+            
+            for (const existingCube of cubeGrowthSystem.allCubes) {
+                const distance = testPosition.distanceTo(existingCube.group.position);
+                totalDistance += distance;
+                
+                // If too close to another cube (less than 80% of cube size), skip this direction
+                if (distance < cubeSize * 0.8) {
+                    tooClose = true;
+                    break;
+                }
+            }
+            
+            // Prefer positions that maintain compact clustering
+            if (!tooClose && totalDistance < minDistance) {
+                minDistance = totalDistance;
+                bestPosition = testPosition;
+            }
+        }
+        
+        // If no good adjacent position found, use a nearby position with small offset
+        if (!bestPosition) {
+            const randomDirection = directions[Math.floor(Math.random() * directions.length)];
+            bestPosition = parentCube.group.position.clone().add(randomDirection);
+            
+            // Add small random offset to prevent perfect overlap
+            bestPosition.add(new THREE.Vector3(
+                (Math.random() - 0.5) * cubeSize * 0.3,
+                (Math.random() - 0.5) * cubeSize * 0.3,
+                (Math.random() - 0.5) * cubeSize * 0.3
+            ));
+        }
+        
+        createNewCube(bestPosition, cubeGrowthSystem.cubeGeneration + 1);
+    }
+    
+    cubeGrowthSystem.cubeGeneration++;
+    cubeGrowthSystem.lastGrowthTime = currentTime;
+    cubeGrowthSystem.hasGrown = true;
+    
+    console.log(`Cube growth triggered! Generation: ${cubeGrowthSystem.cubeGeneration}, Total cubes: ${cubeGrowthSystem.allCubes.length}`);
+}
+
+// Function to update all cube colors when emotional state changes
+function updateAllCubeColors(color) {
+    cubeGrowthSystem.allCubes.forEach(cubeData => {
+        cubeData.mesh.material.color.setHex(color);
+        
+        // Update edge color for each cube's wireframe
+        const r = (color >> 16) & 255;
+        const g = (color >> 8) & 255;
+        const b = color & 255;
+        
+        // Make darker by reducing each component by 40%
+        const darkR = Math.floor(r * 0.6);
+        const darkG = Math.floor(g * 0.6);
+        const darkB = Math.floor(b * 0.6);
+        
+        // Convert back to hex
+        const darkerColor = (darkR << 16) | (darkG << 8) | darkB;
+        
+        // Update the edge material color for this cube
+        cubeData.wireframe.material.color.setHex(darkerColor);
+    });
+}
+
+// Function to update all cubes as one body
+function updateCubeGroupMovement() {
+    // All cubes are now children of organismGroup, so they automatically move together
+    // No need for individual cube position updates - they stick together as one rigid body
+    
+    // Optional: Add slight organic breathing or pulse effect to the whole organism
+    if (cubeGrowthSystem.allCubes.length > 1) {
+        const time = Date.now() * 0.001;
+        const organicScale = 1 + Math.sin(time * 2) * 0.01; // Very subtle pulsing
+        cubeGrowthSystem.organismGroup.scale.setScalar(organicScale);
+        
+        // Optional: Very slight organic rotation for the whole organism
+        cubeGrowthSystem.organismGroup.rotation.z += Math.sin(time * 0.5) * 0.0005;
+    }
+}
 
 // Initialize current cube data (will be loaded or created)
 currentCubeData = null;
@@ -181,9 +373,9 @@ async function initAndLoadCube() {
             
             // Apply loaded rotation if exists
             if (currentCubeData.rotation) {
-                cubeGroup.rotation.x = currentCubeData.rotation.x;
-                cubeGroup.rotation.y = currentCubeData.rotation.y;
-                cubeGroup.rotation.z = currentCubeData.rotation.z;
+                cubeGrowthSystem.organismGroup.rotation.x = currentCubeData.rotation.x;
+                cubeGrowthSystem.organismGroup.rotation.y = currentCubeData.rotation.y;
+                cubeGrowthSystem.organismGroup.rotation.z = currentCubeData.rotation.z;
             }
             
             console.log('Loaded existing cube from IndexedDB:', currentCubeData);
@@ -317,7 +509,7 @@ if (resetButton) {
         updateEdgeColor(initialColor);
         
         // Reset rotation
-        cubeGroup.rotation.set(0, 0, 0);
+        cubeGrowthSystem.organismGroup.rotation.set(0, 0, 0);
         
         // Save the new cube
         await cubeDB.saveCube(currentCubeData);
@@ -332,6 +524,20 @@ if (resetButton) {
     }
     });
 }
+
+// Add a subtle invisible ground plane for shadows
+const groundGeometry = new THREE.PlaneGeometry(10, 10);
+const groundMaterial = new THREE.MeshPhongMaterial({ 
+    color: 0x000000, 
+    transparent: true, 
+    opacity: 0,
+    side: THREE.DoubleSide
+});
+const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -1;
+ground.receiveShadow = true;
+scene.add(ground);
 
 // Add comprehensive lighting system
 const ambientLight = new THREE.AmbientLight(0x404040, 0.4); // Soft ambient light
@@ -384,6 +590,26 @@ function onMouseMove(event) {
     lastMouseMove = Date.now();
     mouseStillTime = 0;
     
+    // Calculate distance from cube center for proximity detection
+    const mouseToCubeDistance = Math.sqrt(mouse.x * mouse.x + mouse.y * mouse.y);
+    const interactionRange = 0.4; // Same range as in trackMouseInteractions
+    
+    // Start interaction tracking only if mouse is close to cube
+    if (mouseToCubeDistance <= interactionRange) {
+        if (!cubeGrowthSystem.isInteracting) {
+            cubeGrowthSystem.isInteracting = true;
+            cubeGrowthSystem.interactionStartTime = Date.now();
+            cubeGrowthSystem.hasGrown = false;
+        }
+    } else {
+        // Mouse moved away from cube area, stop interaction tracking
+        if (cubeGrowthSystem.isInteracting) {
+            cubeGrowthSystem.isInteracting = false;
+            cubeGrowthSystem.interactionStartTime = 0;
+            cubeGrowthSystem.hasGrown = false;
+        }
+    }
+    
     // Calculate distance from cube center for awareness
     const distanceFromCube = Math.sqrt(mouse.x * mouse.x + mouse.y * mouse.y);
     
@@ -423,6 +649,10 @@ function onMouseLeave() {
     // Cube feels "lonely" when cursor leaves
     cubePersonality.mood = Math.max(cubePersonality.mood - 0.1, 0.3);
     cubeState = 'idle';
+    
+    // End interaction tracking
+    cubeGrowthSystem.isInteracting = false;
+    cubeGrowthSystem.interactionStartTime = 0;
 }
 
 function onMouseEnter() {
@@ -431,6 +661,12 @@ function onMouseEnter() {
     // Immediate happy reaction when cursor appears - like seeing a friend
     cubePersonality.mood = Math.min(cubePersonality.mood + 0.4, 1.0);
     cubePersonality.attention = 1.0;
+    
+    // Start interaction tracking
+    cubeGrowthSystem.isInteracting = true;
+    cubeGrowthSystem.interactionStartTime = Date.now();
+    cubeGrowthSystem.hasGrown = false;
+    
     // Small "startle" then recognition behavior
     setTimeout(() => {
         if (mousePresent) cubeState = 'excited';
@@ -594,7 +830,10 @@ function updateConsciousBehavior() {
     
     // Update cube color based on emotional state
     const currentEmotionalColor = getEmotionalColor(cubePersonality.mood, cubeState);
-    cube.material.color.setHex(currentEmotionalColor);
+    
+    // Update all cubes with the new color
+    updateAllCubeColors(currentEmotionalColor);
+    
     updateEdgeColor(currentEmotionalColor);
 }
 
@@ -691,15 +930,15 @@ function updateGlowEffect() {
 }
 
 function createSparkleEffect() {
-    // Create small sparkle lights around the cube
+    // Create small sparkle lights around the organism
     const sparkleLight = new THREE.PointLight(targetEmotionalColor, 0.8, 0.5);
     
-    // Random position around the cube
+    // Random position around the organism
     const angle = Math.random() * Math.PI * 2;
     const distance = 0.3 + Math.random() * 0.2;
-    sparkleLight.position.x = cubeGroup.position.x + Math.cos(angle) * distance;
-    sparkleLight.position.y = cubeGroup.position.y + Math.sin(angle) * distance;
-    sparkleLight.position.z = cubeGroup.position.z + (Math.random() - 0.5) * 0.3;
+    sparkleLight.position.x = cubeGrowthSystem.organismGroup.position.x + Math.cos(angle) * distance;
+    sparkleLight.position.y = cubeGrowthSystem.organismGroup.position.y + Math.sin(angle) * distance;
+    sparkleLight.position.z = cubeGrowthSystem.organismGroup.position.z + (Math.random() - 0.5) * 0.3;
     
     scene.add(sparkleLight);
     
@@ -797,7 +1036,7 @@ function updateLighting() {
     }
     
     // Update emotional light position to cube position
-    emotionalLight.position.copy(cubeGroup.position);
+    emotionalLight.position.copy(cubeGrowthSystem.organismGroup.position);
     emotionalLight.position.z += 0.3; // Slightly in front
     
     // Animate main light for dynamic shadows
@@ -927,7 +1166,7 @@ const createCustomCursor = () => {
         
         // Get actual cube position in screen coordinates
         const vector = new THREE.Vector3();
-        cubeGroup.getWorldPosition(vector);
+        cubeGrowthSystem.organismGroup.getWorldPosition(vector);
         vector.project(camera);
         
         // Convert cube's 3D position to screen coordinates
@@ -966,9 +1205,9 @@ const createCustomCursor = () => {
             customCursor.style.height = '30px';
             
             // Trigger cube contact reaction (with proper positioning)
-            if (!cubeGroup.userData.lastContactTime || Date.now() - cubeGroup.userData.lastContactTime > 500) {
+            if (!cubeGrowthSystem.organismGroup.userData.lastContactTime || Date.now() - cubeGrowthSystem.organismGroup.userData.lastContactTime > 500) {
                 triggerCubeContactEffect(cubeScreenX, cubeScreenY);
-                cubeGroup.userData.lastContactTime = Date.now();
+                cubeGrowthSystem.organismGroup.userData.lastContactTime = Date.now();
             }
             
             // Boost cube's happiness from contact
@@ -1081,22 +1320,26 @@ createCustomCursor();
 
 // Cube contact effect function
 const triggerCubeContactEffect = (cubeScreenX = window.innerWidth / 2, cubeScreenY = window.innerHeight / 2) => {
-    // Visual burst effect on cube
-    cubeGroup.scale.setScalar(1.3);
+    // Visual burst effect on the whole organism
+    cubeGrowthSystem.organismGroup.scale.setScalar(1.3);
     setTimeout(() => {
-        cubeGroup.scale.setScalar(1.0);
+        cubeGrowthSystem.organismGroup.scale.setScalar(1.0);
     }, 200);
     
-    // Change cube color temporarily to show happiness
-    const originalColor = cube.material.color.getHex();
-    cube.material.color.setHex(0xffff00); // Bright yellow when touched
+    // Change all cube colors temporarily to show happiness
+    const originalColors = cubeGrowthSystem.allCubes.map(cubeData => cubeData.mesh.material.color.getHex());
+    cubeGrowthSystem.allCubes.forEach(cubeData => {
+        cubeData.mesh.material.color.setHex(0xffff00); // Bright yellow when touched
+    });
     setTimeout(() => {
-        cube.material.color.setHex(originalColor);
+        cubeGrowthSystem.allCubes.forEach((cubeData, index) => {
+            cubeData.mesh.material.color.setHex(originalColors[index]);
+        });
     }, 300);
     
     // Create temporary contact light burst
     const contactLight = new THREE.PointLight(0xffffff, 2, 1);
-    contactLight.position.copy(cubeGroup.position);
+    contactLight.position.copy(cubeGrowthSystem.organismGroup.position);
     contactLight.position.z += 0.2;
     scene.add(contactLight);
     
@@ -1176,6 +1419,9 @@ function animate() {
     // Update conscious behavior
     updateConsciousBehavior();
     
+    // Update cube group movement (keep all cubes together as one body)
+    updateCubeGroupMovement();
+    
     // Update animation effects
     updateBreathingAnimation();
     updateGlowEffect();
@@ -1216,8 +1462,8 @@ function animate() {
     }
     
     // Physics-based smooth movement with velocity
-    const deltaX = targetPosition.x - cubeGroup.position.x;
-    const deltaY = targetPosition.y - cubeGroup.position.y;
+    const deltaX = targetPosition.x - cubeGrowthSystem.organismGroup.position.x;
+    const deltaY = targetPosition.y - cubeGrowthSystem.organismGroup.position.y;
     
     // Add acceleration towards target (reduced acceleration)
     velocity.x += deltaX * positionSmoothing * 0.15; // Reduced from 0.3
@@ -1231,9 +1477,9 @@ function animate() {
     const movementSpeed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
     const movementRotationInfluence = Math.min(movementSpeed * 15, 0.05); // Scale movement to rotation
     
-    // Apply velocity to position
-    cubeGroup.position.x += velocity.x;
-    cubeGroup.position.y += velocity.y;
+    // Apply velocity to the organism group position (all cubes move together)
+    cubeGrowthSystem.organismGroup.position.x += velocity.x;
+    cubeGrowthSystem.organismGroup.position.y += velocity.y;
     
     // Smooth rotation speed changes with easing
     const rotationDelta = targetRotationSpeed - currentRotationSpeed;
@@ -1255,8 +1501,8 @@ function animate() {
         
         // Smooth "eye contact" rotation with natural hesitation
         const rotationEasing = 0.02 + (consciousness.interest * 0.01); // Faster when more interested
-        cubeGroup.rotation.x += (lookX + attentionShift - cubeGroup.rotation.x) * rotationEasing + currentRotationSpeed + movementRotationInfluence;
-        cubeGroup.rotation.y += (lookY - cubeGroup.rotation.y) * rotationEasing + currentRotationSpeed + movementRotationInfluence * 0.8;
+        cubeGrowthSystem.organismGroup.rotation.x += (lookX + attentionShift - cubeGrowthSystem.organismGroup.rotation.x) * rotationEasing + currentRotationSpeed + movementRotationInfluence;
+        cubeGrowthSystem.organismGroup.rotation.y += (lookY - cubeGrowthSystem.organismGroup.rotation.y) * rotationEasing + currentRotationSpeed + movementRotationInfluence * 0.8;
         
         // Gradual attention decay - cube gets distracted over time
         cubePersonality.attention = Math.max(cubePersonality.attention - 0.0005, 0.1);
@@ -1268,22 +1514,22 @@ function animate() {
         const velocityRotationX = velocity.y * 2; // Vertical movement affects X rotation
         const velocityRotationY = velocity.x * 2; // Horizontal movement affects Y rotation
         
-        cubeGroup.rotation.x += currentRotationSpeed + organicVariation + velocityRotationX + movementRotationInfluence;
-        cubeGroup.rotation.y += currentRotationSpeed - organicVariation * 0.7 + velocityRotationY + movementRotationInfluence * 0.8;
-        cubeGroup.rotation.z += movementRotationInfluence * 0.5; // Add some Z rotation for more dynamic movement
+        cubeGrowthSystem.organismGroup.rotation.x += currentRotationSpeed + organicVariation + velocityRotationX + movementRotationInfluence;
+        cubeGrowthSystem.organismGroup.rotation.y += currentRotationSpeed - organicVariation * 0.7 + velocityRotationY + movementRotationInfluence * 0.8;
+        cubeGrowthSystem.organismGroup.rotation.z += movementRotationInfluence * 0.5; // Add some Z rotation for more dynamic movement
     }
     
     // Update cube data periodically (every 60 frames ≈ 1 second)
     if (frameCount % 60 === 0 && currentCubeData) {
         currentCubeData.rotation = {
-            x: cubeGroup.rotation.x,
-            y: cubeGroup.rotation.y,
-            z: cubeGroup.rotation.z
+            x: cubeGrowthSystem.organismGroup.rotation.x,
+            y: cubeGrowthSystem.organismGroup.rotation.y,
+            z: cubeGrowthSystem.organismGroup.rotation.z
         };
         currentCubeData.position = {
-            x: cubeGroup.position.x,
-            y: cubeGroup.position.y,
-            z: cubeGroup.position.z
+            x: cubeGrowthSystem.organismGroup.position.x,
+            y: cubeGrowthSystem.organismGroup.position.y,
+            z: cubeGrowthSystem.organismGroup.position.z
         };
         // Auto-save rotation data
         cubeDB.updateCube(currentCubeData).catch(console.error);
@@ -1293,10 +1539,10 @@ function animate() {
     frameCount++;
     
     // Emit emotional particles based on current state
-    if (cubeGroup && cubeGroup.position) {
-        // Convert 3D cube position to screen coordinates for particle emission
+    if (cubeGrowthSystem.organismGroup && cubeGrowthSystem.organismGroup.position) {
+        // Convert 3D organism position to screen coordinates for particle emission
         const vector = new THREE.Vector3();
-        vector.copy(cubeGroup.position);
+        vector.copy(cubeGrowthSystem.organismGroup.position);
         vector.project(camera);
         
         const cubeScreenX = (vector.x * 0.5 + 0.5) * canvas.clientWidth;
@@ -1324,9 +1570,75 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
     
-    // Keep cube centered
-    cubeGroup.position.set(0, 0, 0);
+    // Keep organism centered
+    cubeGrowthSystem.organismGroup.position.set(0, 0, 0);
 });
 
 // Start animation
 animate();
+
+// Track mouse interactions for cube growth
+function trackMouseInteractions() {
+    // Check if currently interacting and mouse is close to cube
+    if (cubeGrowthSystem.isInteracting && mousePresent) {
+        const currentTime = Date.now();
+        
+        // Calculate distance from cube center for proximity check
+        const distanceFromCube = Math.sqrt(mouse.x * mouse.x + mouse.y * mouse.y);
+        
+        // Only allow growth if mouse is close to the cube (within interaction range)
+        const interactionRange = 0.4; // Adjust this value to control interaction distance
+        
+        if (distanceFromCube <= interactionRange) {
+            // Check if interaction duration exceeds threshold and hasn't grown yet
+            if (currentTime - cubeGrowthSystem.interactionStartTime > cubeGrowthSystem.growthThreshold && 
+                !cubeGrowthSystem.hasGrown) {
+                // Trigger cube growth (cell division)
+                triggerCubeGrowth();
+            }
+        } else {
+            // Mouse moved away from cube, stop growth process
+            cubeGrowthSystem.isInteracting = false;
+            cubeGrowthSystem.interactionStartTime = 0;
+            cubeGrowthSystem.hasGrown = false;
+        }
+    }
+}
+
+// Event listener for mouse down (start interaction)
+canvas.addEventListener('mousedown', () => {
+    cubeGrowthSystem.isInteracting = true;
+    cubeGrowthSystem.interactionStartTime = Date.now();
+});
+
+// Event listener for mouse up (end interaction)
+canvas.addEventListener('mouseup', () => {
+    cubeGrowthSystem.isInteracting = false;
+    
+    // Check if growth occurred during interaction
+    if (cubeGrowthSystem.hasGrown) {
+        // Save the new cube state to IndexedDB
+        if (currentCubeData) {
+            currentCubeData.position = {
+                x: cubeGrowthSystem.organismGroup.position.x,
+                y: cubeGrowthSystem.organismGroup.position.y,
+                z: cubeGrowthSystem.organismGroup.position.z
+            };
+            cubeDB.updateCube(currentCubeData).catch(console.error);
+        }
+        
+        // Update display
+        updateDataDisplay();
+    }
+});
+
+// Update loop for tracking mouse interactions
+function update() {
+    requestAnimationFrame(update);
+    
+    // Track mouse interactions for cube growth
+    trackMouseInteractions();
+}
+
+// Start update loop
+update();
