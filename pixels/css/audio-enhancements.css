@@ -1,0 +1,81 @@
+/* Audio-reactive visual enhancements for Pixel Pets */
+
+/* Subtle pulse animation that syncs with ambient sounds */
+@keyframes audioAmbientPulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.1); }
+    50% { box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.05); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.1); }
+}
+
+/* Visual feedback for interaction zones */
+.interaction-zone {
+    pointer-events: none;
+    position: fixed;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    transition: opacity 0.3s ease;
+    z-index: 1;
+}
+
+/* Container that gets ambient pulse */
+.canvas-container {
+    animation: audioAmbientPulse 10s infinite;
+}
+
+/* Subtle glow effect when interacting */
+.canvas-container.interacting {
+    animation: none;
+    box-shadow: 0 0 30px 10px rgba(100, 200, 255, 0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+/* Visual sound wave effect */
+@keyframes soundWave {
+    0% { 
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% { 
+        transform: scale(3);
+        opacity: 0;
+    }
+}
+
+.sound-wave {
+    position: fixed;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: soundWave 0.6s ease-out;
+    z-index: 1000;
+}
+
+/* 8-bit style cursor enhancement */
+.canvas-container:hover {
+    cursor: crosshair;
+}
+
+/* Retro-style notification for audio events */
+.audio-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #00ff00;
+    padding: 5px 10px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    border: 1px solid #00ff00;
+    border-radius: 3px;
+    z-index: 1000;
+    animation: fadeInOut 2s ease-in-out;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(-10px); }
+    20% { opacity: 1; transform: translateY(0); }
+    80% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-10px); }
+}

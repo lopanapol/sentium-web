@@ -207,6 +207,11 @@ function createNewCube(position, generation) {
     // Add to the organism group instead of scene - this makes them move as one body
     cubeGrowthSystem.organismGroup.add(newCubeGroup);
     
+    // Play spawn sound for new cubes
+    if (window.retroAudio && generation > 0) {
+        window.retroAudio.playCubeSpawn();
+    }
+    
     // Add to cubes array
     cubeGrowthSystem.allCubes.push({
         mesh: newCube,
@@ -302,6 +307,19 @@ function triggerCubeGrowth() {
     cubeGrowthSystem.cubeGeneration++;
     cubeGrowthSystem.lastGrowthTime = currentTime;
     cubeGrowthSystem.hasGrown = true;
+    
+    // Play growth sound
+    if (window.retroAudio) {
+        window.retroAudio.playCubeGrowth();
+        
+        // Special sounds for generation milestones
+        if (cubeGrowthSystem.cubeGeneration === 3) {
+            // Play cluster formation sound when reaching generation 3 (8 cubes)
+            setTimeout(() => {
+                window.retroAudio.playClusterFormation();
+            }, 500);
+        }
+    }
     
     // Save growth state to database
     saveGrowthState();
@@ -704,6 +722,11 @@ function onMouseMove(event) {
     mousePresent = true;
     lastMouseMove = Date.now();
     mouseStillTime = 0;
+    
+    // Play subtle mouse movement sound occasionally
+    if (Math.random() < 0.005 && window.retroAudio) {
+        window.retroAudio.playMouseMove();
+    }
     
     // Calculate distance from cube center for proximity detection
     const mouseToCubeDistance = Math.sqrt(mouse.x * mouse.x + mouse.y * mouse.y);
@@ -1763,6 +1786,16 @@ function trackMouseInteractions() {
         if (distanceFromCube <= interactionRange) {
             const interactionDuration = currentTime - cubeGrowthSystem.interactionStartTime;
             
+            // Play hover sound when first entering interaction zone
+            if (interactionDuration > 100 && interactionDuration < 200 && window.retroAudio) {
+                window.retroAudio.playHover();
+            }
+            
+            // Play interaction sound during active interaction
+            if (interactionDuration > 500 && interactionDuration % 1000 < 16 && window.retroAudio) {
+                window.retroAudio.playCubeInteraction();
+            }
+            
             // Debug logging
             if (interactionDuration > 1000 && interactionDuration % 500 < 16) { // Log every 500ms
                 console.log(`Interaction duration: ${interactionDuration}ms, threshold: ${cubeGrowthSystem.growthThreshold}ms, hasGrown: ${cubeGrowthSystem.hasGrown}`);
@@ -1787,6 +1820,11 @@ canvas.addEventListener('mousedown', () => {
     cubeGrowthSystem.isInteracting = true;
     cubeGrowthSystem.interactionStartTime = Date.now();
     cubeGrowthSystem.hasGrown = false; // Reset growth flag when starting new interaction
+    
+    // Play interaction start sound
+    if (window.retroAudio) {
+        window.retroAudio.playCubeInteraction();
+    }
 });
 
 // Event listener for mouse up (end interaction)
