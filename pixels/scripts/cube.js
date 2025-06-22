@@ -569,14 +569,14 @@ async function initAndLoadCube() {
             }
             
             // Use saved random values (they can't be changed for existing pets)
-            cubeGrowthSystem.maxGeneration = currentCubeData.genetics?.maxGeneration || Math.floor(Math.random() * 3) + 2; // Random 2-4
-            cubeGrowthSystem.baseSize = currentCubeData.genetics?.baseSize || Math.random() * 0.1 + 0.05; // Random 0.05-0.15
+            cubeGrowthSystem.maxGeneration = 0; // Force to 0 for single cube
+            cubeGrowthSystem.baseSize = 0.15; // Force to 0.15
             
             // If genetics don't exist in saved data, save them now
             if (!currentCubeData.genetics) {
                 currentCubeData.genetics = {
-                    maxGeneration: cubeGrowthSystem.maxGeneration,
-                    baseSize: cubeGrowthSystem.baseSize
+                    maxGeneration: 0, // Force to 0 for single cube
+                    baseSize: 0.15 // Force to 0.15
                 };
                 await cubeDB.updateCube(currentCubeData);
             }
@@ -611,8 +611,8 @@ async function initAndLoadCube() {
             console.log(`Loaded existing cube from IndexedDB. Max Gen: ${cubeGrowthSystem.maxGeneration}, Size: ${cubeGrowthSystem.baseSize.toFixed(3)}`, currentCubeData);
         } else {
             // No existing cube, create new one with random genetics
-            cubeGrowthSystem.maxGeneration = Math.floor(Math.random() * 6) + 1; // Random 1-6 generations
-            cubeGrowthSystem.baseSize = Math.random() * 0.15 + 0.15; // Random 0.15-0.3 size
+            cubeGrowthSystem.maxGeneration = 0; // Force to 0 for single cube
+            cubeGrowthSystem.baseSize = 0.15; // Force to 0.15
             
             // Initialize the main cube with the new random size
             initializeMainCube();
@@ -623,8 +623,8 @@ async function initAndLoadCube() {
                 created: new Date(),
                 name: `${Date.now()}`,
                 genetics: {
-                    maxGeneration: cubeGrowthSystem.maxGeneration,
-                    baseSize: cubeGrowthSystem.baseSize
+                    maxGeneration: 0, // Force to 0 for single cube
+                    baseSize: 0.15 // Force to 0.15
                 },
                 growthState: {
                     generation: 0,
@@ -2062,4 +2062,3 @@ canvas.addEventListener('mouseup', () => {
         updateDataDisplay();
     }
 });
-
