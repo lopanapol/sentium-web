@@ -585,6 +585,11 @@
 	function p8_run_cart()
 	{
 		if (p8_is_running) return;
+
+		document.documentElement.style.overscrollBehavior = 'none';
+		document.documentElement.style.overflow = 'hidden';
+		document.body.style.overscrollBehavior = 'none';
+		document.body.style.overflow = 'hidden';
 		p8_is_running = true;
 
 		// touch: hide everything except p8_frame_0
@@ -610,8 +615,8 @@
 
 		// install touch events. These also serve to block scrolling / pinching / zooming on phones when p8_is_running
 			// moved event.preventDefault(); calls into pico8_buttons_event() (want to let top buttons pass through)
-		addEventListener("touchstart", function(event){ pico8_buttons_event(event, 0); }, {passive: false});
-		addEventListener("touchmove",  function(event){ pico8_buttons_event(event, 1); }, {passive: false});
+		addEventListener("touchstart", function(event){ if (p8_is_running && p8_touch_detected) { event.preventDefault(); } pico8_buttons_event(event, 0); }, {passive: false});
+		addEventListener("touchmove",  function(event){ if (p8_is_running && p8_touch_detected) { event.preventDefault(); } pico8_buttons_event(event, 1); }, {passive: false});
 		addEventListener("touchend",   function(event){ pico8_buttons_event(event, 2); }, {passive: false});
 
 
@@ -949,10 +954,7 @@
 
 <STYLE TYPE="text/css">
 <!--
-html, body {
-    overscroll-behavior: none;
-    overflow: hidden;
-}
+
 .p8_menu_button{
 	opacity:1;
 	padding:4px;
