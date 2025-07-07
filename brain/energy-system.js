@@ -195,7 +195,7 @@ window.localConnection = {
         <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px; margin: 10px 0;">
           <strong>Quick Fixes:</strong><br>
           • Install <a href="https://chrome.google.com/webstore/detail/cors-unblock/lfhmikememgdcahcdlaciloancbhjino" target="_blank" style="color: #87CEEB;">CORS Unblock extension</a><br>
-          • Or run locally: <code style="background: rgba(255,255,255,0.2); padding: 2px 4px; border-radius: 2px;">http://localhost/sentium-pixel</code><br>
+          • Or run locally: <code style="background: rgba(255,255,255,0.2); padding: 2px 4px; border-radius: 2px;">http://localhost/sentium-web</code><br>
           • Force connection: <a href="?local=true" style="color: #87CEEB;">Add ?local=true</a><br>
           • Suppress warning: <a href="?cors=ignore" style="color: #87CEEB;">Add ?cors=ignore</a>
         </div>

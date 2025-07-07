@@ -518,11 +518,11 @@ Create working examples based on brands/registry.json:
 
 ```html
 <!-- Simple embed for publishers -->
-<div id="sentium-pixel-container"></div>
+<div id="sentium-web-container"></div>
 <script src="https://sentium.dev/embed/sentium-embed.js"></script>
 <script>
   SentiumEmbed.init({
-    container: 'sentium-pixel-container',
+    container: 'sentium-web-container',
     brandFilter: ['techcorp', 'gamezone'], // Optional brand filtering
     maxPixels: 3,
     autoConnect: true
@@ -596,7 +596,7 @@ const messageTypes = {
 #### **File Structure After Phase 1:**
 
 ```
-sentium-pixel/                 # GitHub Pages repository
+sentium-web/                 # GitHub Pages repository
 ├── index.html                 # Clean home page
 ├── network/
 │   ├── dashboard.html         # Network monitoring

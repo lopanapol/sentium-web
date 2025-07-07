@@ -9,7 +9,7 @@ echo ""
 
 # Check if we're in the right directory
 if not test -f "index.html"
-    echo "Error: Please run this script from the sentium-pixel directory"
+    echo "Error: Please run this script from the sentium-web directory"
     echo "   Expected files: index.html, brain/, css/, etc."
     exit 1
 end

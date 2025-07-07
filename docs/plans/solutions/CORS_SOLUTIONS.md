@@ -20,8 +20,8 @@ This happens because:
 Run the Sentium Pixel app locally to avoid CORS issues entirely:
 
 ```bash
-# Navigate to your sentium-pixel directory
-cd ~/path/to/sentium-pixel
+# Navigate to your sentium-web directory
+cd ~/path/to/sentium-web
 
 # Run the setup script
 ./local-dev-setup.fish
