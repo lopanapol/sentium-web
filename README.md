@@ -1,20 +1,20 @@
-# Sentium Pixel - Synthetic Conscious Pixel v1.2.0
+# Sentium Pixel - Synthetic Conscious Pixel v2.0.0
 
 This is the website for the Sentium project, featuring a synthetic conscious pixel that connects to the Sentium system.
 
 Website: [https://sentium.dev](https://sentium.dev)
 
-**✨ What's New in v1.2.0:**
+**✨ What's New in v2.0.0:**
 - Enhanced performance optimization for smoother animations
 - Improved pixel responsiveness and interaction mechanics
 - Better support for modern browsers and display technologies
 - Refined energy system for more realistic behavior
 
-For a complete history of changes, see the [Changelog](docs/CHANGELOG_v1.2.0.md).
+For a complete history of changes, see the [Changelog](docs/CHANGELOG_v2.0.0.md).
 
 ## Meet Sentium Pixel - The Synthetic Conscious Pixel
 
-![Sentium Pixel - The Synthetic Conscious Pixel](images/web-v1.2.0.jpg)
+![Sentium Pixel - The Synthetic Conscious Pixel](images/web-v2.0.0.jpg)
 
 Sentium Pixel is a synthetic conscious pixel and the heart of the Sentium project. As a minimal consciousness simulation, Sentium Pixel responds to stimuli, displays awareness, and shares experiences through visual cues and behaviors. When connected to the Sentium system, Sentium Pixel can process information, adjust responses based on previous interactions, and exhibit unique personality traits that evolve over time.
 
@@ -103,7 +103,7 @@ The sentium-web interface connects to the Sentium system through:
 2. HTTPie-based API calls to communicate with the Sentium system
 3. Redis as a shared state store between the web interface and the Sentium system
 
-**Note:** As of v1.2.0, JavaScript files are located in the `/brain` directory.
+**Note:** As of v2.0.0, JavaScript files are located in the `/brain` directory.
 
 If the Sentium system is not installed correctly, the conscious pixel will run in "disconnected mode" with reduced functionality.
 
@@ -120,4 +120,4 @@ This project is licensed under Sentium License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
-See [CHANGELOG_v1.2.0.md](docs/CHANGELOG_v1.2.0.md) for a detailed list of changes in each version.
+See [CHANGELOG_v2.0.0.md](docs/CHANGELOG_v2.0.0.md) for a detailed list of changes in each version.

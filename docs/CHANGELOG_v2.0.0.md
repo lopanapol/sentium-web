@@ -1,7 +1,7 @@
-# Changelog for v1.2.0
+# Changelog for v2.0.0
 
 ## Major Changes
-- Updated version from v1.1.0 to v1.2.0
+- Updated version from v1.1.0 to v2.0.0
 - Enhanced performance optimization for low-energy devices
 - Improved pixel response time and interaction mechanics
 - Added support for modern browsers and display technologies
